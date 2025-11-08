@@ -156,6 +156,14 @@ export interface CreateGameRequest {
   pid: string;
 }
 
+export interface GetGameResponse{
+  gid: string;
+  title: string;
+  author: string;
+  duration: number;
+  size: string;
+}
+
 export interface RecordSolveRequest {
   gid: string;
   time_to_solve: number;
