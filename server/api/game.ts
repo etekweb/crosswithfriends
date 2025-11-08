@@ -1,7 +1,9 @@
 import express from 'express';
-import {CreateGameResponse, CreateGameRequest} from '../../src/shared/types';
+import {CreateGameResponse, CreateGameRequest, InfoJson, GetGameResponse} from '../../src/shared/types';
 
 import {addInitialGameEvent} from '../model/game';
+import { getPuzzleSolves } from '../model/puzzle_solve';
+import { getPuzzleInfo } from '../model/puzzle';
 
 const router = express.Router();
 
@@ -13,19 +15,22 @@ router.post<{}, CreateGameResponse, CreateGameRequest>('/', async (req, res) => 
   });
 });
 
-router.get<{gid: string}>('/:gid', async (req, res) => {
+router.get<{gid: string}, GetGameResponse>('/:gid', async (req, res) => {
+  console.log('got req', req.headers, req.body);
   try {
     const {gid} = req.params;
+
     const puzzleSolves = await getPuzzleSolves([gid]);
 
     if (puzzleSolves.length === 0) {
-      return res.status(404).json({error: 'Game not found'});
+      return res.sendStatus(404);
     }
 
     const gameState = puzzleSolves[0];
     const puzzleInfo = await getPuzzleInfo(gameState.pid) as InfoJson;
 
     res.json({
+      gid: gid,
       title: gameState.title,
       author: puzzleInfo?.author || 'Unknown',
       duration: gameState.time_taken_to_solve,
@@ -33,7 +38,7 @@ router.get<{gid: string}>('/:gid', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching game state:', error);
-    res.status(500).json({error: 'Internal server error'});
+    res.sendStatus(500);
   }
 });
 
