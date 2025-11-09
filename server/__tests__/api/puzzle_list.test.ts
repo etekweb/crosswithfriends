@@ -1,0 +1,96 @@
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi, type Mock } from 'vitest';
+import { buildTestApp, closeApp, waitForApp } from '../helpers';
+import type { FastifyInstance } from 'fastify';
+import * as puzzleModel from '../../model/puzzle';
+
+// Mock the model
+vi.mock('../../model/puzzle');
+
+describe('Puzzle List API', () => {
+  let app: FastifyInstance;
+
+  beforeAll(async () => {
+    app = await buildTestApp();
+    await waitForApp(app);
+  });
+
+  afterAll(async () => {
+    await closeApp(app);
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('GET /api/puzzle_list', () => {
+    it('should return puzzle list with valid query parameters', async () => {
+      const mockPuzzles = [
+        {
+          pid: 'pid1',
+          content: { title: 'Puzzle 1' },
+          times_solved: 10,
+        },
+        {
+          pid: 'pid2',
+          content: { title: 'Puzzle 2' },
+          times_solved: 5,
+        },
+      ];
+
+      (puzzleModel.listPuzzles as Mock).mockResolvedValue(mockPuzzles);
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/puzzle_list?page=0&pageSize=10&filter[sizeFilter][Mini]=true&filter[sizeFilter][Standard]=true',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body).toHaveProperty('puzzles');
+      expect(body.puzzles).toHaveLength(2);
+      expect(body.puzzles[0]).toEqual({
+        pid: 'pid1',
+        content: { title: 'Puzzle 1' },
+        stats: { numSolves: 10 },
+      });
+    });
+
+    it('should return 400 for invalid page parameter', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/puzzle_list?page=invalid&pageSize=10',
+      });
+
+      expect(response.statusCode).toBe(400);
+      const body = JSON.parse(response.body);
+      expect(body.statusCode).toBe(400);
+      expect(body.message).toBe('page and pageSize should be integers');
+    });
+
+    it('should return 400 for invalid pageSize parameter', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/puzzle_list?page=0&pageSize=invalid',
+      });
+
+      expect(response.statusCode).toBe(400);
+      const body = JSON.parse(response.body);
+      expect(body.statusCode).toBe(400);
+    });
+
+    it('should handle errors from model', async () => {
+      const error = new Error('Database error');
+      (puzzleModel.listPuzzles as Mock).mockRejectedValue(error);
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/puzzle_list?page=0&pageSize=10',
+      });
+
+      expect(response.statusCode).toBe(500);
+      const body = JSON.parse(response.body);
+      expect(body.statusCode).toBe(500);
+    });
+  });
+});
+

@@ -1,35 +1,49 @@
-import express from 'express';
-import morgan from 'morgan';
-import bodyParser from 'body-parser';
-
-import http from 'http';
+import fastify from 'fastify';
+import cors from '@fastify/cors';
 import socketIo from 'socket.io';
 import _ from 'lodash';
-import cors from 'cors';
 import SocketManager from './SocketManager';
 import apiRouter from './api/router';
 
-const app = express();
-const server = new http.Server(app);
-app.use(bodyParser.json());
 const port = process.env.PORT || 3000;
-const io = socketIo(server, {pingInterval: 2000, pingTimeout: 5000});
 
-// ======== HTTP Server Config ==========
+// ======== Fastify Server Config ==========
 
-io.origins('*:*'); // allow CORS for socket.io route
-app.use(cors()); // allow CORS for all express routes
-if (process.env.NODE_ENV === 'production') {
-  app.use(morgan('combined'));
-} else {
-  app.use(morgan('tiny'));
-}
+const app = fastify({
+  logger: process.env.NODE_ENV === 'production' ? {
+    level: 'info',
+  } : {
+    level: 'debug',
+  },
+});
 
-app.use('/api', apiRouter);
+// Set custom error handler
+app.setErrorHandler((error, request, reply) => {
+  request.log.error(error);
+  
+  // Handle validation errors
+  if (error.validation) {
+    reply.code(400).send({
+      statusCode: 400,
+      error: 'Bad Request',
+      message: 'Validation error',
+      validation: error.validation,
+    });
+    return;
+  }
+  
+  // Handle errors with status codes
+  const statusCode = error.statusCode || 500;
+  reply.code(statusCode).send({
+    statusCode,
+    error: error.name || 'Internal Server Error',
+    message: error.message || 'An error occurred',
+  });
+});
 
 // ================== Logging ================
 
-function logAllEvents(log: typeof console.log) {
+function logAllEvents(io: socketIo.Server, log: typeof console.log) {
   io.on('*', (event: any, ...args: any) => {
     try {
       log(`[${event}]`, _.truncate(JSON.stringify(args), {length: 100}));
@@ -42,16 +56,38 @@ function logAllEvents(log: typeof console.log) {
 // ================== Main Entrypoint ================
 
 async function runServer() {
-  const socketManager = new SocketManager(io);
-  socketManager.listen();
-  logAllEvents(console.log);
-  server.listen(port, () => console.log(`Listening on port ${port}`));
-  process.once('SIGUSR2', () => {
-    server.close(() => {
-      console.log('exiting...');
-      process.kill(process.pid, 'SIGUSR2');
-      console.log('exited');
+  try {
+    // Register CORS plugin
+    await app.register(cors, {
+      origin: true,
     });
+
+    // Register API routes
+    await app.register(apiRouter, { prefix: '/api' });
+    
+    // Initialize Socket.IO after server is ready but before listening
+    app.addHook('onReady', () => {
+      const server = app.server;
+      const io = socketIo(server, {pingInterval: 2000, pingTimeout: 5000});
+      io.origins('*:*'); // allow CORS for socket.io route
+      
+      const socketManager = new SocketManager(io);
+      socketManager.listen();
+      logAllEvents(io, app.log.info.bind(app.log));
+    });
+    
+    await app.listen({ port: Number(port), host: '0.0.0.0' });
+    app.log.info(`Listening on port ${port}`);
+  } catch (err) {
+    app.log.error(err);
+    process.exit(1);
+  }
+  
+  process.once('SIGUSR2', async () => {
+    await app.close();
+    app.log.info('exiting...');
+    process.kill(process.pid, 'SIGUSR2');
+    app.log.info('exited');
   });
 }
 

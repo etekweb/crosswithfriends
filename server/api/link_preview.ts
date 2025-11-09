@@ -1,4 +1,4 @@
-import express from 'express';
+import { FastifyInstance } from 'fastify';
 import _ from 'lodash';
 
 import {InfoJson} from '../../src/shared/types';
@@ -6,56 +6,60 @@ import {getGameInfo} from '../model/game';
 import {islinkExpanderBot, isFBMessengerCrawler} from '../../utils/link_preview_util';
 import {getPuzzleInfo} from '../model/puzzle';
 
-const router = express.Router();
+async function linkPreviewRouter(fastify: FastifyInstance) {
+  fastify.get<{Querystring: {url: string}}>('/', async (request, reply) => {
+    request.log.debug({ headers: request.headers, query: request.query }, 'got req');
+    
+    let url: URL;
+    try {
+      url = new URL(request.query.url as string);
+    } catch {
+      const error = new Error('Invalid URL') as Error & { statusCode: number };
+      error.statusCode = 400;
+      throw error;
+    }
 
-router.get('/', async (req, res) => {
-  console.log('got req', req.headers, req.body);
-  let url;
+    let info: InfoJson | null = null;
+    const pathParts = url.pathname.split('/');
+    if (pathParts[1] === 'game') {
+      const gid = pathParts[2];
+      info = (await getGameInfo(gid)) as InfoJson;
+    } else if (pathParts[1] === 'play') {
+      const pid = pathParts[2];
+      info = (await getPuzzleInfo(pid)) as InfoJson;
+    } else {
+      const error = new Error('Invalid URL path') as Error & { statusCode: number };
+      error.statusCode = 400;
+      throw error;
+    }
 
-  try {
-    url = new URL(req.query.url as string);
-  } catch (_) {
-    res.sendStatus(400);
-    return;
-  }
+    if (_.isEmpty(info)) {
+      const error = new Error('Game or puzzle not found') as Error & { statusCode: number };
+      error.statusCode = 404;
+      throw error;
+    }
 
-  let info;
-  if (url.pathname.split('/')[2] === 'game') {
-    const gid = url.pathname.split('/')[3];
-    info = (await getGameInfo(gid)) as InfoJson;
-  } else if (url.pathname.split('/')[2] === 'play') {
-    const pid = url.pathname.split('/')[3];
-    info = (await getPuzzleInfo(pid)) as InfoJson;
-  } else {
-    res.sendStatus(400);
-    return;
-  }
+    const ua = request.headers['user-agent'] as string;
 
-  if (_.isEmpty(info)) {
-    res.sendStatus(404);
-    return;
-  }
+    if (!islinkExpanderBot(ua)) {
+      // In case a human accesses this endpoint
+      return reply.redirect(url.href);
+    }
 
-  const ua = req.headers['user-agent'] as string;
+    // OGP doesn't support an author property, so we need to delegate to the oEmbed endpoint
+    const protocol = request.protocol;
+    const host = request.headers.host || '';
+    const oembedEndpointUrl = `${protocol}://${host}/api/oembed?author=${encodeURIComponent(
+      info.author
+    )}`;
 
-  if (!islinkExpanderBot(ua)) {
-    // In case a human accesses this endpoint
-    res.redirect(url.href);
-    return;
-  }
+    // Messenger only supports title + thumbnail, so cram everything into the title property if Messenger
+    const titlePropContent = isFBMessengerCrawler(ua)
+      ? [info.title, info.author, info.description].filter(Boolean).join(' | ')
+      : info.title;
 
-  // OGP doesn't support an author property, so we need to delegate to the oEmbed endpoint
-  const oembedEndpointUrl = `${req.protocol}://${req.get('host')}/api/oembed?author=${encodeURIComponent(
-    info.author
-  )}`;
-
-  // Messenger only supports title + thumbnail, so cram everything into the title property if Messenger
-  const titlePropContent = isFBMessengerCrawler(ua)
-    ? [info.title, info.author, info.description].filter(Boolean).join(' | ')
-    : info.title;
-
-  // https://ogp.me
-  res.send(String.raw`
+    // https://ogp.me
+    return reply.type('text/html').send(String.raw`
         <html prefix="og: https://ogp.me/ns/website#">
             <head>
                 <title>${titlePropContent}</title>
@@ -69,6 +73,7 @@ router.get('/', async (req, res) => {
             </head>
         </html>
     `);
-});
+  });
+}
 
-export default router;
+export default linkPreviewRouter;

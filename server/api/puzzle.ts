@@ -1,16 +1,14 @@
+import { FastifyInstance } from 'fastify';
 import {AddPuzzleResponse, AddPuzzleRequest} from '@shared/types';
-import express from 'express';
 
 import {addPuzzle} from '../model/puzzle';
 
-const router = express.Router();
-
-router.post<{}, AddPuzzleResponse, AddPuzzleRequest>('/', async (req, res) => {
-  console.log('got req', req.headers, req.body);
-  const pid = await addPuzzle(req.body.puzzle, req.body.isPublic, req.body.pid);
-  res.json({
-    pid,
+async function puzzleRouter(fastify: FastifyInstance) {
+  fastify.post<{Body: AddPuzzleRequest, Reply: AddPuzzleResponse}>('/', async (request) => {
+    request.log.debug({ headers: request.headers, body: request.body }, 'got req');
+    const pid = await addPuzzle(request.body.puzzle, request.body.isPublic, request.body.pid);
+    return { pid };
   });
-});
+}
 
-export default router;
+export default puzzleRouter;

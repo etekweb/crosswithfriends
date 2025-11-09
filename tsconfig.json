@@ -3,14 +3,14 @@
   "compilerOptions": {
     "module": "esnext",
     "noFallthroughCasesInSwitch": true,
-    "jsx": "react-jsx"
-  },
-  "paths": {
-    "@shared/*": [
-      "./src/shared/*"
-    ],
-    "@lib/*": [
-      "./src/lib/*"
-    ]
+    "jsx": "react-jsx",
+    "paths": {
+      "@shared/*": [
+        "./src/shared/*"
+      ],
+      "@lib/*": [
+        "./src/lib/*"
+      ]
+    }
   }
 }

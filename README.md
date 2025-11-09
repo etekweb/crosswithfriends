@@ -20,10 +20,10 @@ If you notice a bug or have a feature request, feel free to open an issue.
    `git clone https://github.com/ScaleOvenStove/crosswithfriends.git`
    `cd crosswithfriends`
 
-3. Use node v18
+3. Use node v20
    `nvm install`
    `nvm use`
-   `nvm alias default 18` (optional)
+   `nvm alias default 20` (optional)
 
 4. Install Dependencies
    `yarn`
