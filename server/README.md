@@ -42,8 +42,8 @@ Create a new game.
 
 ```typescript
 {
-  gid: string;  // Game ID
-  pid: string;  // Puzzle ID
+  gid: string; // Game ID
+  pid: string; // Puzzle ID
 }
 ```
 
@@ -70,8 +70,8 @@ Get game information by game ID.
   gid: string;
   title: string;
   author: string;
-  duration: number;  // Time taken to solve (in seconds)
-  size: string;      // Puzzle size (e.g., "Mini", "Standard")
+  duration: number; // Time taken to solve (in seconds)
+  size: string; // Puzzle size (e.g., "Mini", "Standard")
 }
 ```
 
@@ -99,7 +99,7 @@ Add a new puzzle.
 
 ```typescript
 {
-  pid: string;  // Puzzle ID
+  pid: string; // Puzzle ID
 }
 ```
 
@@ -149,14 +149,15 @@ Record a puzzle solve.
 ```typescript
 {
   gid: string;
-  time_to_solve: number;  // Time in seconds
+  time_to_solve: number; // Time in seconds
 }
 ```
 
 **Response:**
 
 ```typescript
-{}
+{
+}
 ```
 
 ### Stats Endpoints
@@ -191,7 +192,7 @@ Get statistics for multiple games.
     gameId: string;
     title: string;
     size: string;
-    dateSolved: string;  // Format: "YYYY-MM-DD"
+    dateSolved: string; // Format: "YYYY-MM-DD"
     solveTime: number;
     checkedSquareCount: number;
     revealedSquareCount: number;
@@ -212,7 +213,8 @@ Increment and get a new game ID.
 **Request Body:**
 
 ```typescript
-{}
+{
+}
 ```
 
 **Response:**
@@ -230,7 +232,8 @@ Increment and get a new puzzle ID.
 **Request Body:**
 
 ```typescript
-{}
+{
+}
 ```
 
 **Response:**
@@ -273,8 +276,8 @@ OEmbed endpoint for link previews.
 
 ```typescript
 {
-  type: "link";
-  version: "1.0";
+  type: 'link';
+  version: '1.0';
   author_name: string;
 }
 ```
@@ -372,7 +375,6 @@ CREATE TABLE game_events(
 3. **Configure environment variables:**
 
    Copy `.envrc.template` to `.envrc` and set the following variables:
-
    - `PGDATABASE`
    - `PGUSER`
    - `PGPASSWORD`

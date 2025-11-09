@@ -12,18 +12,21 @@ This directory contains unit and integration tests for the Fastify backend serve
 ## Running Tests
 
 ### Run all backend tests
+
 ```bash
-npm run test:backend
+yarn run test:backend
 ```
 
 ### Run tests in watch mode
+
 ```bash
-npm run test:backend:watch
+yarn run test:backend:watch
 ```
 
 ### Run tests with coverage
+
 ```bash
-npm run test:backend:coverage
+yarn run test:backend:coverage
 ```
 
 ## Test Coverage
@@ -31,6 +34,7 @@ npm run test:backend:coverage
 The tests cover:
 
 ### Unit Tests
+
 - **Counters API** (`/api/counters`) - Testing GID and PID increment endpoints
 - **Puzzle API** (`/api/puzzle`) - Testing puzzle creation
 - **Game API** (`/api/game`) - Testing game creation and retrieval
@@ -41,6 +45,7 @@ The tests cover:
 - **Link Preview API** (`/api/link_preview`) - Testing link preview generation
 
 ### Integration Tests
+
 - Server setup and initialization
 - Error handling and formatting
 - CORS configuration
@@ -52,9 +57,9 @@ The tests cover:
 ### Unit Test Example
 
 ```typescript
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi, type Mock } from 'vitest';
-import { buildTestApp, closeApp, waitForApp } from '../helpers';
-import type { FastifyInstance } from 'fastify';
+import {describe, it, expect, beforeAll, afterAll, beforeEach, vi, type Mock} from 'vitest';
+import {buildTestApp, closeApp, waitForApp} from '../helpers';
+import type {FastifyInstance} from 'fastify';
 import * as modelModule from '../../model/your-model';
 
 // Mock the model
@@ -82,11 +87,11 @@ describe('Your API', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/your-endpoint',
-      payload: { data: 'test' },
+      payload: {data: 'test'},
     });
 
     expect(response.statusCode).toBe(200);
-    expect(JSON.parse(response.body)).toEqual({ result: 'result' });
+    expect(JSON.parse(response.body)).toEqual({result: 'result'});
   });
 });
 ```
@@ -94,9 +99,9 @@ describe('Your API', () => {
 ### Integration Test Example
 
 ```typescript
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { buildTestApp, closeApp, waitForApp } from '../helpers';
-import type { FastifyInstance } from 'fastify';
+import {describe, it, expect, beforeAll, afterAll} from 'vitest';
+import {buildTestApp, closeApp, waitForApp} from '../helpers';
+import type {FastifyInstance} from 'fastify';
 
 describe('Your Integration Test', () => {
   let app: FastifyInstance;
@@ -135,6 +140,5 @@ describe('Your Integration Test', () => {
 To debug tests, you can:
 
 1. Use `console.log` in tests (they won't be suppressed if DEBUG is set)
-2. Run a single test file: `npm run test:backend -- path/to/test.test.ts`
-3. Use `--verbose` flag: `npm run test:backend -- --verbose`
-
+2. Run a single test file: `yarn run test:backend -- path/to/test.test.ts`
+3. Use `--verbose` flag: `yarn run test:backend -- --verbose`

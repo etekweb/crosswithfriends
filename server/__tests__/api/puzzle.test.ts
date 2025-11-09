@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi, type Mock } from 'vitest';
-import { buildTestApp, closeApp, waitForApp } from '../helpers';
-import type { FastifyInstance } from 'fastify';
+import {describe, it, expect, beforeAll, afterAll, beforeEach, vi, type Mock} from 'vitest';
+import {buildTestApp, closeApp, waitForApp} from '../helpers';
+import type {FastifyInstance} from 'fastify';
 import * as puzzleModel from '../../model/puzzle';
 
 // Mock the model
@@ -25,7 +25,7 @@ describe('Puzzle API', () => {
   describe('POST /api/puzzle', () => {
     it('should create a puzzle and return pid', async () => {
       const mockPid = 'test-pid-789';
-      const mockPuzzle = { title: 'Test Puzzle', clues: [] };
+      const mockPuzzle = {title: 'Test Puzzle', clues: []};
       const mockRequest = {
         puzzle: mockPuzzle,
         isPublic: true,
@@ -41,12 +41,8 @@ describe('Puzzle API', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(JSON.parse(response.body)).toEqual({ pid: mockPid });
-      expect(puzzleModel.addPuzzle).toHaveBeenCalledWith(
-        mockPuzzle,
-        true,
-        undefined
-      );
+      expect(JSON.parse(response.body)).toEqual({pid: mockPid});
+      expect(puzzleModel.addPuzzle).toHaveBeenCalledWith(mockPuzzle, true, undefined);
     });
 
     it('should handle errors from model', async () => {
@@ -69,4 +65,3 @@ describe('Puzzle API', () => {
     });
   });
 });
-

@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi, type Mock } from 'vitest';
-import { buildTestApp, closeApp, waitForApp } from '../helpers';
-import type { FastifyInstance } from 'fastify';
+import {describe, it, expect, beforeAll, afterAll, beforeEach, vi, type Mock} from 'vitest';
+import {buildTestApp, closeApp, waitForApp} from '../helpers';
+import type {FastifyInstance} from 'fastify';
 import * as gameModel from '../../model/game';
 import * as puzzleModel from '../../model/puzzle';
 
@@ -62,9 +62,9 @@ describe('Link Preview API', () => {
         author: 'Test Author',
         description: 'Test Description',
       };
-      
+
       (gameModel.getGameInfo as Mock).mockResolvedValue(mockGameInfo);
-      
+
       const response = await app.inject({
         method: 'GET',
         url: `/api/link_preview?url=${encodeURIComponent(mockUrl)}`,
@@ -128,7 +128,7 @@ describe('Link Preview API', () => {
 
     it('should return 404 when game/puzzle not found', async () => {
       const mockUrl = 'https://example.com/game/nonexistent';
-      
+
       (gameModel.getGameInfo as Mock).mockResolvedValue(null);
 
       const response = await app.inject({
@@ -146,4 +146,3 @@ describe('Link Preview API', () => {
     });
   });
 });
-

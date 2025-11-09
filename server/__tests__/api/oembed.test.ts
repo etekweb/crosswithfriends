@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { buildTestApp, closeApp, waitForApp } from '../helpers';
-import type { FastifyInstance } from 'fastify';
+import {describe, it, expect, beforeAll, afterAll} from 'vitest';
+import {buildTestApp, closeApp, waitForApp} from '../helpers';
+import type {FastifyInstance} from 'fastify';
 
 describe('OEmbed API', () => {
   let app: FastifyInstance;
@@ -43,4 +43,3 @@ describe('OEmbed API', () => {
     });
   });
 });
-

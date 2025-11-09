@@ -1,9 +1,9 @@
-import { FastifyInstance } from 'fastify';
-import _ from 'lodash'
+import {FastifyInstance} from 'fastify';
+import _ from 'lodash';
 
 async function oEmbedRouter(fastify: FastifyInstance) {
   fastify.get<{Querystring: {author: string}}>('/', async (request) => {
-    request.log.debug({ headers: request.headers, query: request.query }, 'got req');
+    request.log.debug({headers: request.headers, query: request.query}, 'got req');
 
     const author = request.query.author as string;
 

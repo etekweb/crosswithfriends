@@ -1,4 +1,4 @@
-import fastify, { FastifyInstance } from 'fastify';
+import fastify, {FastifyInstance} from 'fastify';
 import cors from '@fastify/cors';
 import apiRouter from '../api/router';
 
@@ -18,7 +18,7 @@ export async function buildTestApp(): Promise<FastifyInstance> {
   // Set custom error handler (same as production)
   app.setErrorHandler((error, request, reply) => {
     request.log.error(error);
-    
+
     if (error.validation) {
       reply.code(400).send({
         statusCode: 400,
@@ -28,7 +28,7 @@ export async function buildTestApp(): Promise<FastifyInstance> {
       });
       return;
     }
-    
+
     const statusCode = error.statusCode || 500;
     reply.code(statusCode).send({
       statusCode,
@@ -38,7 +38,7 @@ export async function buildTestApp(): Promise<FastifyInstance> {
   });
 
   // Register API routes
-  await app.register(apiRouter, { prefix: '/api' });
+  await app.register(apiRouter, {prefix: '/api'});
 
   return app;
 }
@@ -56,4 +56,3 @@ export async function waitForApp(app: FastifyInstance): Promise<void> {
 export async function closeApp(app: FastifyInstance): Promise<void> {
   await app.close();
 }
-

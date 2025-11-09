@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi, type Mock } from 'vitest';
-import { buildTestApp, closeApp, waitForApp } from '../helpers';
-import type { FastifyInstance } from 'fastify';
+import {describe, it, expect, beforeAll, afterAll, beforeEach, vi, type Mock} from 'vitest';
+import {buildTestApp, closeApp, waitForApp} from '../helpers';
+import type {FastifyInstance} from 'fastify';
 import * as puzzleSolveModel from '../../model/puzzle_solve';
 
 // Mock the model
@@ -34,7 +34,7 @@ describe('Stats API', () => {
           time_taken_to_solve: 120,
           revealed_squares_count: 50,
           checked_squares_count: 100,
-          solved_time: { format: () => '2024-01-01' },
+          solved_time: {format: () => '2024-01-01'},
         },
         {
           gid: 'gid2',
@@ -44,18 +44,16 @@ describe('Stats API', () => {
           time_taken_to_solve: 180,
           revealed_squares_count: 60,
           checked_squares_count: 120,
-          solved_time: { format: () => '2024-01-02' },
+          solved_time: {format: () => '2024-01-02'},
         },
       ];
 
-      (puzzleSolveModel.getPuzzleSolves as Mock).mockResolvedValue(
-        mockPuzzleSolves
-      );
+      (puzzleSolveModel.getPuzzleSolves as Mock).mockResolvedValue(mockPuzzleSolves);
 
       const response = await app.inject({
         method: 'POST',
         url: '/api/stats',
-        payload: { gids: mockGids },
+        payload: {gids: mockGids},
       });
 
       expect(response.statusCode).toBe(200);
@@ -71,7 +69,7 @@ describe('Stats API', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/api/stats',
-        payload: { gids: 'not-an-array' },
+        payload: {gids: 'not-an-array'},
       });
 
       expect(response.statusCode).toBe(400);
@@ -84,7 +82,7 @@ describe('Stats API', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/api/stats',
-        payload: { gids: [123, 456] },
+        payload: {gids: [123, 456]},
       });
 
       expect(response.statusCode).toBe(400);
@@ -99,7 +97,7 @@ describe('Stats API', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/api/stats',
-        payload: { gids: ['gid1'] },
+        payload: {gids: ['gid1']},
       });
 
       expect(response.statusCode).toBe(500);
@@ -108,4 +106,3 @@ describe('Stats API', () => {
     });
   });
 });
-

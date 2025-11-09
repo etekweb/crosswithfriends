@@ -17,4 +17,3 @@ if (!process.env.DEBUG) {
     error: () => {},
   };
 }
-

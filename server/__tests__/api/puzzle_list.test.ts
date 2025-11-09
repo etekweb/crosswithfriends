@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi, type Mock } from 'vitest';
-import { buildTestApp, closeApp, waitForApp } from '../helpers';
-import type { FastifyInstance } from 'fastify';
+import {describe, it, expect, beforeAll, afterAll, beforeEach, vi, type Mock} from 'vitest';
+import {buildTestApp, closeApp, waitForApp} from '../helpers';
+import type {FastifyInstance} from 'fastify';
 import * as puzzleModel from '../../model/puzzle';
 
 // Mock the model
@@ -27,12 +27,12 @@ describe('Puzzle List API', () => {
       const mockPuzzles = [
         {
           pid: 'pid1',
-          content: { title: 'Puzzle 1' },
+          content: {title: 'Puzzle 1'},
           times_solved: 10,
         },
         {
           pid: 'pid2',
-          content: { title: 'Puzzle 2' },
+          content: {title: 'Puzzle 2'},
           times_solved: 5,
         },
       ];
@@ -50,8 +50,8 @@ describe('Puzzle List API', () => {
       expect(body.puzzles).toHaveLength(2);
       expect(body.puzzles[0]).toEqual({
         pid: 'pid1',
-        content: { title: 'Puzzle 1' },
-        stats: { numSolves: 10 },
+        content: {title: 'Puzzle 1'},
+        stats: {numSolves: 10},
       });
     });
 
@@ -93,4 +93,3 @@ describe('Puzzle List API', () => {
     });
   });
 });
-

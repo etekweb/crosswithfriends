@@ -1,4 +1,4 @@
-import { FastifyInstance } from 'fastify';
+import {FastifyInstance} from 'fastify';
 import _ from 'lodash';
 
 import {InfoJson} from '../../src/shared/types';
@@ -8,13 +8,13 @@ import {getPuzzleInfo} from '../model/puzzle';
 
 async function linkPreviewRouter(fastify: FastifyInstance) {
   fastify.get<{Querystring: {url: string}}>('/', async (request, reply) => {
-    request.log.debug({ headers: request.headers, query: request.query }, 'got req');
-    
+    request.log.debug({headers: request.headers, query: request.query}, 'got req');
+
     let url: URL;
     try {
       url = new URL(request.query.url as string);
     } catch {
-      const error = new Error('Invalid URL') as Error & { statusCode: number };
+      const error = new Error('Invalid URL') as Error & {statusCode: number};
       error.statusCode = 400;
       throw error;
     }
@@ -28,13 +28,13 @@ async function linkPreviewRouter(fastify: FastifyInstance) {
       const pid = pathParts[2];
       info = (await getPuzzleInfo(pid)) as InfoJson;
     } else {
-      const error = new Error('Invalid URL path') as Error & { statusCode: number };
+      const error = new Error('Invalid URL path') as Error & {statusCode: number};
       error.statusCode = 400;
       throw error;
     }
 
     if (_.isEmpty(info)) {
-      const error = new Error('Game or puzzle not found') as Error & { statusCode: number };
+      const error = new Error('Game or puzzle not found') as Error & {statusCode: number};
       error.statusCode = 404;
       throw error;
     }
@@ -49,9 +49,7 @@ async function linkPreviewRouter(fastify: FastifyInstance) {
     // OGP doesn't support an author property, so we need to delegate to the oEmbed endpoint
     const protocol = request.protocol;
     const host = request.headers.host || '';
-    const oembedEndpointUrl = `${protocol}://${host}/api/oembed?author=${encodeURIComponent(
-      info.author
-    )}`;
+    const oembedEndpointUrl = `${protocol}://${host}/api/oembed?author=${encodeURIComponent(info.author)}`;
 
     // Messenger only supports title + thumbnail, so cram everything into the title property if Messenger
     const titlePropContent = isFBMessengerCrawler(ua)

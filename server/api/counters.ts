@@ -1,4 +1,4 @@
-import { FastifyInstance } from 'fastify';
+import {FastifyInstance} from 'fastify';
 import {
   IncrementGidRequest,
   IncrementGidResponse,
@@ -8,16 +8,16 @@ import {
 import {incrementGid, incrementPid} from '../model/counters';
 
 async function countersRouter(fastify: FastifyInstance) {
-  fastify.post<{Body: IncrementGidRequest, Reply: IncrementGidResponse}>('/gid', async (request) => {
+  fastify.post<{Body: IncrementGidRequest; Reply: IncrementGidResponse}>('/gid', async (request) => {
     request.log.debug('increment gid');
     const gid = await incrementGid();
-    return { gid };
+    return {gid};
   });
 
-  fastify.post<{Body: IncrementPidRequest, Reply: IncrementPidResponse}>('/pid', async (request) => {
+  fastify.post<{Body: IncrementPidRequest; Reply: IncrementPidResponse}>('/pid', async (request) => {
     request.log.debug('increment pid');
     const pid = await incrementPid();
-    return { pid };
+    return {pid};
   });
 }
 

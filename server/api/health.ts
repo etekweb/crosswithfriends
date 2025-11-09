@@ -1,4 +1,4 @@
-import { FastifyInstance } from 'fastify';
+import {FastifyInstance} from 'fastify';
 
 /**
  * Health check endpoint for Docker and monitoring
@@ -14,4 +14,3 @@ async function healthRouter(fastify: FastifyInstance) {
 }
 
 export default healthRouter;
-

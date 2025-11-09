@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi, type Mock } from 'vitest';
-import { buildTestApp, closeApp, waitForApp } from '../helpers';
-import type { FastifyInstance } from 'fastify';
+import {describe, it, expect, beforeAll, afterAll, beforeEach, vi, type Mock} from 'vitest';
+import {buildTestApp, closeApp, waitForApp} from '../helpers';
+import type {FastifyInstance} from 'fastify';
 import * as countersModel from '../../model/counters';
 
 // Mock the model
@@ -34,7 +34,7 @@ describe('Counters API', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(JSON.parse(response.body)).toEqual({ gid: mockGid });
+      expect(JSON.parse(response.body)).toEqual({gid: mockGid});
       expect(countersModel.incrementGid).toHaveBeenCalledTimes(1);
     });
 
@@ -67,7 +67,7 @@ describe('Counters API', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(JSON.parse(response.body)).toEqual({ pid: mockPid });
+      expect(JSON.parse(response.body)).toEqual({pid: mockPid});
       expect(countersModel.incrementPid).toHaveBeenCalledTimes(1);
     });
 
@@ -87,4 +87,3 @@ describe('Counters API', () => {
     });
   });
 });
-

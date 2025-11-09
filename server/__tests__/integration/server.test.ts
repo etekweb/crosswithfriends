@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { buildTestApp, closeApp, waitForApp } from '../helpers';
-import type { FastifyInstance } from 'fastify';
+import {describe, it, expect, beforeAll, afterAll} from 'vitest';
+import {buildTestApp, closeApp, waitForApp} from '../helpers';
+import type {FastifyInstance} from 'fastify';
 
 describe('Server Integration Tests', () => {
   let app: FastifyInstance;
@@ -68,7 +68,7 @@ describe('Server Integration Tests', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/api/stats',
-        payload: { gids: 'invalid' }, // This should trigger validation error
+        payload: {gids: 'invalid'}, // This should trigger validation error
       });
 
       expect(response.statusCode).toBeGreaterThanOrEqual(400);
@@ -82,7 +82,7 @@ describe('Server Integration Tests', () => {
   describe('API Routes Registration', () => {
     it('should register all API routes', async () => {
       const routes = app.printRoutes();
-      
+
       // Check that key routes are registered (routes are nested in the tree structure)
       expect(routes).toContain('counters/');
       expect(routes).toContain('puzzle');
@@ -93,7 +93,7 @@ describe('Server Integration Tests', () => {
       // Check for the actual nested routes (they appear on separate lines in the tree)
       expect(routes).toContain('gid (POST)');
       expect(routes).toContain('pid (POST)');
-      
+
       // Verify puzzle_list route is accessible (even if it errors, it should not be 404)
       const puzzleListResponse = await app.inject({
         method: 'GET',
@@ -120,7 +120,7 @@ describe('Server Integration Tests', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/api/counters/gid',
-        payload: { test: 'data' },
+        payload: {test: 'data'},
         headers: {
           'content-type': 'application/json',
         },
@@ -138,10 +138,9 @@ describe('Server Integration Tests', () => {
       });
 
       expect(response.headers['content-type']).toContain('application/json');
-      
+
       // Should be valid JSON
       expect(() => JSON.parse(response.body)).not.toThrow();
     });
   });
 });
-

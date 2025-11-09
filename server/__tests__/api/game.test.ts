@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi, type Mock } from 'vitest';
-import { buildTestApp, closeApp, waitForApp } from '../helpers';
-import type { FastifyInstance } from 'fastify';
+import {describe, it, expect, beforeAll, afterAll, beforeEach, vi, type Mock} from 'vitest';
+import {buildTestApp, closeApp, waitForApp} from '../helpers';
+import type {FastifyInstance} from 'fastify';
 import * as gameModel from '../../model/game';
 import * as puzzleSolveModel from '../../model/puzzle_solve';
 import * as puzzleModel from '../../model/puzzle';
@@ -43,11 +43,8 @@ describe('Game API', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(JSON.parse(response.body)).toEqual({ gid: mockGid });
-      expect(gameModel.addInitialGameEvent).toHaveBeenCalledWith(
-        mockGid,
-        'test-pid-456'
-      );
+      expect(JSON.parse(response.body)).toEqual({gid: mockGid});
+      expect(gameModel.addInitialGameEvent).toHaveBeenCalledWith(mockGid, 'test-pid-456');
     });
 
     it('should handle errors from model', async () => {
@@ -87,12 +84,8 @@ describe('Game API', () => {
         description: 'Test Description',
       };
 
-      (puzzleSolveModel.getPuzzleSolves as Mock).mockResolvedValue(
-        mockPuzzleSolves
-      );
-      (puzzleModel.getPuzzleInfo as Mock).mockResolvedValue(
-        mockPuzzleInfo
-      );
+      (puzzleSolveModel.getPuzzleSolves as Mock).mockResolvedValue(mockPuzzleSolves);
+      (puzzleModel.getPuzzleInfo as Mock).mockResolvedValue(mockPuzzleInfo);
 
       const response = await app.inject({
         method: 'GET',
@@ -137,4 +130,3 @@ describe('Game API', () => {
     });
   });
 });
-

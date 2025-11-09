@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import {defineConfig} from 'vitest/config';
 import path from 'path';
 
 export default defineConfig({
@@ -11,13 +11,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      exclude: [
-        '**/*.d.ts',
-        '**/__tests__/**',
-        '**/node_modules/**',
-        '**/dist/**',
-        '**/coverage/**',
-      ],
+      exclude: ['**/*.d.ts', '**/__tests__/**', '**/node_modules/**', '**/dist/**', '**/coverage/**'],
     },
   },
   resolve: {
@@ -27,4 +21,3 @@ export default defineConfig({
     },
   },
 });
-
