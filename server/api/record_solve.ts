@@ -1,17 +1,18 @@
-import express from 'express';
-import {RecordSolveRequest, RecordSolveResponse} from '../../src/shared/types';
+import {FastifyInstance, FastifyRequest, FastifyReply} from 'fastify';
+import {RecordSolveRequest, RecordSolveResponse} from '@shared/types';
 import {recordSolve} from '../model/puzzle';
 
-const router = express.Router();
+async function recordSolveRouter(fastify: FastifyInstance) {
+  fastify.post<{Params: {pid: string}; Body: RecordSolveRequest; Reply: RecordSolveResponse}>(
+    '/:pid',
+    async (
+      request: FastifyRequest<{Params: {pid: string}; Body: RecordSolveRequest}>,
+      _reply: FastifyReply
+    ) => {
+      await recordSolve(request.params.pid, request.body.gid, request.body.time_to_solve);
+      return {};
+    }
+  );
+}
 
-router.post<{pid: string}, RecordSolveResponse, RecordSolveRequest>('/:pid', async (req, res, next) => {
-  const recordSolveRequest = req.body;
-  try {
-    await recordSolve(req.params.pid, recordSolveRequest.gid, recordSolveRequest.time_to_solve);
-    res.json({});
-  } catch (e) {
-    next(e);
-  }
-});
-
-export default router;
+export default recordSolveRouter;

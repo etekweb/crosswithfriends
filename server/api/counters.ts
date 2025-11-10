@@ -1,28 +1,25 @@
-import express from 'express';
-import {
-  IncrementGidRequest,
-  IncrementGidResponse,
-  IncrementPidRequest,
-  IncrementPidResponse,
-} from '@shared/types';
+import {FastifyInstance, FastifyRequest, FastifyReply} from 'fastify';
+import {IncrementGidResponse, IncrementPidResponse} from '@shared/types';
 import {incrementGid, incrementPid} from '../model/counters';
 
-const router = express.Router();
+async function countersRouter(fastify: FastifyInstance) {
+  fastify.post<{Reply: IncrementGidResponse}>(
+    '/gid',
+    async (request: FastifyRequest, _reply: FastifyReply) => {
+      request.log.debug('increment gid');
+      const gid = await incrementGid();
+      return {gid};
+    }
+  );
 
-router.post<{}, IncrementGidResponse, IncrementGidRequest>('/gid', async (req, res) => {
-  console.log('increment gid');
-  const gid = await incrementGid();
-  res.json({
-    gid,
-  });
-});
+  fastify.post<{Reply: IncrementPidResponse}>(
+    '/pid',
+    async (request: FastifyRequest, _reply: FastifyReply) => {
+      request.log.debug('increment pid');
+      const pid = await incrementPid();
+      return {pid};
+    }
+  );
+}
 
-router.post<{}, IncrementPidResponse, IncrementPidRequest>('/pid', async (req, res) => {
-  console.log('increment pid');
-  const pid = await incrementPid();
-  res.json({
-    pid,
-  });
-});
-
-export default router;
+export default countersRouter;

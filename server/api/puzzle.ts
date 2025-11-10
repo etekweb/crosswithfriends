@@ -1,16 +1,43 @@
+import {FastifyInstance, FastifyRequest, FastifyReply} from 'fastify';
 import {AddPuzzleResponse, AddPuzzleRequest} from '@shared/types';
-import express from 'express';
 
 import {addPuzzle} from '../model/puzzle';
 
-const router = express.Router();
+async function puzzleRouter(fastify: FastifyInstance) {
+  fastify.post<{Body: AddPuzzleRequest; Reply: AddPuzzleResponse}>(
+    '/',
+    async (request: FastifyRequest<{Body: AddPuzzleRequest}>, _reply: FastifyReply) => {
+      // Sanitize headers: redact sensitive fields
+      const sanitizedHeaders: Record<string, string | string[] | undefined> = {};
+      const sensitiveHeaderKeys = ['authorization', 'cookie', 'set-cookie'];
+      for (const [key, value] of Object.entries(request.headers)) {
+        if (sensitiveHeaderKeys.includes(key.toLowerCase())) {
+          sanitizedHeaders[key] = '[REDACTED]';
+        } else {
+          sanitizedHeaders[key] = value;
+        }
+      }
 
-router.post<{}, AddPuzzleResponse, AddPuzzleRequest>('/', async (req, res) => {
-  console.log('got req', req.headers, req.body);
-  const pid = await addPuzzle(req.body.puzzle, req.body.isPublic, req.body.pid);
-  res.json({
-    pid,
-  });
-});
+      // Create safe body summary: log keys and size instead of full payload
+      const bodySummary = {
+        keys: Object.keys(request.body || {}),
+        size: JSON.stringify(request.body || {}).length,
+      };
 
-export default router;
+      request.log.debug(
+        {
+          method: request.method,
+          url: request.url,
+          id: request.id,
+          headers: sanitizedHeaders,
+          body: bodySummary,
+        },
+        'got req'
+      );
+      const pid = await addPuzzle(request.body.puzzle, request.body.isPublic, request.body.pid);
+      return {pid};
+    }
+  );
+}
+
+export default puzzleRouter;

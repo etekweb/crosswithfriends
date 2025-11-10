@@ -1,34 +1,51 @@
+import {FastifyInstance, FastifyRequest, FastifyReply} from 'fastify';
 import {ListPuzzleResponse} from '@shared/types';
-import express from 'express';
-import _ from 'lodash';
 import {listPuzzles} from '../model/puzzle';
-import {ListPuzzleRequestFilters} from '../../src/shared/types';
+import {ListPuzzleRequestFilters} from '@shared/types';
+import {createHttpError} from './errors';
 
-const router = express.Router();
-
-router.get<{}, ListPuzzleResponse>('/', async (req, res, next) => {
-  const page = Number.parseInt(req.query.page as string, 10);
-  const pageSize = Number.parseInt(req.query.pageSize as string, 10);
-  const rawFilters = req.query.filter as any;
-  const filters: ListPuzzleRequestFilters = {
-    sizeFilter: {
-      Mini: rawFilters.sizeFilter.Mini === 'true',
-      Standard: rawFilters.sizeFilter.Standard === 'true',
-    },
-    nameOrTitleFilter: rawFilters.nameOrTitleFilter as string,
+interface PuzzleListQuery {
+  page: string;
+  pageSize: string;
+  filter?: {
+    sizeFilter?: {
+      Mini?: string;
+      Standard?: string;
+    };
+    nameOrTitleFilter?: string;
   };
-  if (!(Number.isFinite(page) && Number.isFinite(pageSize))) {
-    next(_.assign(new Error('page and pageSize should be integers'), {statusCode: 400}));
-  }
-  const rawPuzzleList = await listPuzzles(filters, pageSize, page * pageSize);
-  const puzzles = rawPuzzleList.map((puzzle) => ({
-    pid: puzzle.pid,
-    content: puzzle.content,
-    stats: {numSolves: puzzle.times_solved},
-  }));
-  res.json({
-    puzzles,
-  });
-});
+}
 
-export default router;
+async function puzzleListRouter(fastify: FastifyInstance) {
+  fastify.get<{Querystring: PuzzleListQuery; Reply: ListPuzzleResponse}>(
+    '/',
+    async (request: FastifyRequest<{Querystring: PuzzleListQuery}>, _reply: FastifyReply) => {
+      const page = Number.parseInt(request.query.page, 10);
+      const pageSize = Number.parseInt(request.query.pageSize, 10);
+
+      if (!(Number.isFinite(page) && Number.isFinite(pageSize))) {
+        throw createHttpError('page and pageSize should be integers', 400);
+      }
+
+      const rawFilters = request.query.filter;
+      const filters: ListPuzzleRequestFilters = {
+        sizeFilter: {
+          Mini: rawFilters?.sizeFilter?.Mini === 'true',
+          Standard: rawFilters?.sizeFilter?.Standard === 'true',
+        },
+        nameOrTitleFilter: (rawFilters?.nameOrTitleFilter ?? '') as string,
+      };
+
+      const rawPuzzleList = await listPuzzles(filters, pageSize, page * pageSize);
+      const puzzles = rawPuzzleList.map((puzzle) => ({
+        pid: puzzle.pid,
+        content: puzzle.content,
+        stats: {numSolves: puzzle.times_solved},
+      }));
+
+      return {puzzles};
+    }
+  );
+}
+
+export default puzzleListRouter;

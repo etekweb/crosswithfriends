@@ -1,16 +1,11 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "module": "esnext",
-    "noFallthroughCasesInSwitch": true,
-    "jsx": "react-jsx"
-  },
-  "paths": {
-    "@shared/*": [
-      "./src/shared/*"
-    ],
-    "@lib/*": [
-      "./src/lib/*"
-    ]
+    "module": "ESNext",
+    "jsx": "react",
+    "paths": {
+      "@shared/*": ["./src/shared/*"],
+      "@lib/*": ["./src/lib/*"]
+    }
   }
 }

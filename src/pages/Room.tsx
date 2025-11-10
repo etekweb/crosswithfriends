@@ -10,6 +10,7 @@ import {RoomEvent, SetGameRoomEvent, UserPingRoomEvent} from '../shared/roomEven
 import {useSocket} from '../sockets/useSocket';
 import {initialRoomState, roomReducer} from '../lib/reducers/room';
 import {emitAsync} from '../sockets/emitAsync';
+import {getUser} from '../store';
 
 const ACTIVE_SECONDS_TIMEOUT = 60;
 
@@ -106,13 +107,15 @@ const Room: React.FC<RouteComponentProps<{rid: string}>> = (props) => {
 
   async function sendUserPing() {
     if (socket) {
-      const event = UserPingRoomEvent();
+      const uid = getUser().id;
+      const event = UserPingRoomEvent(uid);
       emitAsync(socket, 'room_event', {rid, event});
     }
   }
   async function setGame(gid: string) {
     if (socket) {
-      const event = SetGameRoomEvent(gid);
+      const uid = getUser().id;
+      const event = SetGameRoomEvent(gid, uid);
       emitAsync(socket, 'room_event', {rid, event});
     }
   }

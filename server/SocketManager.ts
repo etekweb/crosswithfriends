@@ -6,19 +6,20 @@ import {addGameEvent, GameEvent, getGameEvents} from './model/game';
 import {addRoomEvent, getRoomEvents} from './model/room';
 
 interface SocketEvent {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
-// Look for { .sv: 'timestamp' } and relpcae with Date.now()
-function assignTimestamp(event: SocketEvent) {
+// Look for { .sv: 'timestamp' } and replace with Date.now()
+function assignTimestamp(event: unknown): unknown {
   if (event && typeof event === 'object') {
-    if (event['.sv'] === 'timestamp') {
+    const eventObj = event as SocketEvent;
+    if (eventObj['.sv'] === 'timestamp') {
       return Date.now();
     }
     const result = event.constructor();
     // eslint-disable-next-line guard-for-in
-    for (const key in event) {
-      result[key] = assignTimestamp(event[key]);
+    for (const key in eventObj) {
+      result[key] = assignTimestamp(eventObj[key]);
     }
     return result;
   }
@@ -35,13 +36,13 @@ class SocketManager {
   }
 
   async addGameEvent(gid: string, event: SocketEvent) {
-    const gameEvent: GameEvent = assignTimestamp(event);
+    const gameEvent: GameEvent = assignTimestamp(event) as GameEvent;
     await addGameEvent(gid, gameEvent);
     this.io.to(`game-${gid}`).emit('game_event', gameEvent);
   }
 
   async addRoomEvent(rid: string, event: SocketEvent) {
-    const roomEvent: RoomEvent = assignTimestamp(event);
+    const roomEvent: RoomEvent = assignTimestamp(event) as RoomEvent;
     await addRoomEvent(rid, roomEvent);
     this.io.to(`room-${rid}`).emit('room_event', roomEvent);
   }

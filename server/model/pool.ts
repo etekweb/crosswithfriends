@@ -8,5 +8,5 @@ export const pool = new pg.Pool({
   database: process.env.PGDATABASE,
   ssl: {
     rejectUnauthorized: false,
-  }
+  },
 });

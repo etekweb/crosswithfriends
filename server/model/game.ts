@@ -55,7 +55,7 @@ export async function addGameEvent(gid: string, event: GameEvent) {
   //console.log(`addGameEvent(${gid}, ${event.type}) took ${ms}ms`);
 }
 
-export async function addInitialGameEvent(gid: string, pid: string) {
+export async function addInitialGameEvent(gid: string, pid: string): Promise<string> {
   const puzzle = await getPuzzle(pid);
   console.log('got puzzle', puzzle);
   const {info = {}, grid: solution = [['']], circles = []} = puzzle;
@@ -89,5 +89,6 @@ export async function addInitialGameEvent(gid: string, pid: string) {
       },
     },
   };
-  addGameEvent(gid, initialEvent);
+  await addGameEvent(gid, initialEvent);
+  return gid;
 }

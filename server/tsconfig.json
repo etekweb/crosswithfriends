@@ -1,13 +1,28 @@
 {
   "compilerOptions": {
-    "noImplicitAny": true,
-    "strictNullChecks": true,
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "lib": ["ES2022"],
+    "outDir": "./dist",
+    "strict": false,
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "allowJs": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "incremental": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "baseUrl": "..",
     "paths": {
-      "@shared/*": ["../src/shared/*"],
-      "@lib/*": ["../src/lib/*"]
+      "@shared/*": ["shared/src/shared/*"],
+      "@lib/*": ["shared/src/lib/*"]
     }
   },
-  "include": [".", "../src/lib", "../src/shared"]
+  "include": [".", "../shared/src/lib", "../shared/src/shared", "./utils"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
 }

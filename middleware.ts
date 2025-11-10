@@ -1,4 +1,4 @@
-import {islinkExpanderBot} from './utils/link_preview_util';
+import {islinkExpanderBot} from './server/utils/link_preview_util';
 
 function isAsset(url) {
   return /\.(png|jpe?g|gif|css|js|svg|ico|map|json)$/i.test(url.pathname);

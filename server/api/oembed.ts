@@ -1,19 +1,31 @@
-import express from 'express';
-import _ from 'lodash'
+import {FastifyInstance, FastifyRequest, FastifyReply} from 'fastify';
 
-const router = express.Router();
+interface OEmbedQuery {
+  author: string;
+}
 
-router.get('/', async (req, res) => {
-    console.log('got req', req.headers, req.body);
+interface OEmbedResponse {
+  type: string;
+  version: string;
+  author_name: string;
+}
 
-    const author = req.query.author as string
+async function oEmbedRouter(fastify: FastifyInstance) {
+  fastify.get<{Querystring: OEmbedQuery; Reply: OEmbedResponse}>(
+    '/',
+    async (request: FastifyRequest<{Querystring: OEmbedQuery}>, _reply: FastifyReply) => {
+      request.log.debug({headers: request.headers, query: request.query}, 'got req');
 
-    // https://oembed.com/#section2.3
-    res.json({
+      const author = request.query.author;
+
+      // https://oembed.com/#section2.3
+      return {
         type: 'link',
         version: '1.0',
         author_name: author,
-    });
-});
+      };
+    }
+  );
+}
 
-export default router;
+export default oEmbedRouter;
