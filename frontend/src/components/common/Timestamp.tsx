@@ -14,7 +14,7 @@ interface TimestampProps {
 const Timestamp: React.FC<TimestampProps> = ({time, format, relative, autoUpdate}) => {
   const formatTime = (timestamp: number): string => {
     const date = new Date(timestamp * 1000); // Convert seconds to milliseconds
-    
+
     if (relative) {
       const now = Date.now();
       const diff = now - date.getTime();
@@ -22,18 +22,18 @@ const Timestamp: React.FC<TimestampProps> = ({time, format, relative, autoUpdate
       const minutes = Math.floor(seconds / 60);
       const hours = Math.floor(minutes / 60);
       const days = Math.floor(hours / 24);
-      
+
       if (days > 0) return `${days} day${days !== 1 ? 's' : ''} ago`;
       if (hours > 0) return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
       if (minutes > 0) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
       return 'just now';
     }
-    
+
     if (format) {
       // Simple format support - can be extended if needed
       return date.toLocaleString();
     }
-    
+
     // Default format: show date and time
     return date.toLocaleString();
   };
@@ -59,7 +59,7 @@ const Timestamp: React.FC<TimestampProps> = ({time, format, relative, autoUpdate
       const interval = setInterval(() => {
         setDisplayTime(formatTime(timestamp));
       }, 60000); // Update every minute
-      
+
       return () => clearInterval(interval);
     }
   }, [timestamp, relative, autoUpdate]);
@@ -68,4 +68,3 @@ const Timestamp: React.FC<TimestampProps> = ({time, format, relative, autoUpdate
 };
 
 export default Timestamp;
-
