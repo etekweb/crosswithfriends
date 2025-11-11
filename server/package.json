@@ -2,10 +2,10 @@
   "name": "@crosswithfriends/server",
   "version": "0.1.0",
   "private": true,
-  "type": "commonjs",
+  "type": "module",
   "main": "server.ts",
   "scripts": {
-    "dev": "cross-env PORT=3021 nodemon --watch . -e \"ts\" --exec \"npx ts-node -P tsconfig.json server.ts\"",
+    "dev": "cross-env PORT=3021 npx tsx watch server.ts",
     "dev:prod": "source ../../.env.prod; PORT=3021 nodemon --watch . -e \"ts\" --exec \"npx ts-node -P tsconfig.json server.ts\"",
     "serve:prod": "while true; do env $(cat ../../.env.prod | xargs) NODE_ENV=production PORT=3021 ts-node -P tsconfig.json server.ts || true; done",
     "serve:staging": "while true; do env $(cat ../../.env.staging | xargs) NODE_ENV=production PORT=4021 ts-node -P tsconfig.json server.ts || true; done",
@@ -39,6 +39,7 @@
     "eslint": "^9.39.1",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
+    "tsx": "^4.19.2",
     "typescript": "^5.9.3",
     "vitest": "^4.0.8"
   }

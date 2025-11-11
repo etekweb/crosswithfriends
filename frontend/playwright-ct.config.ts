@@ -27,40 +27,40 @@ export default defineConfig({
     ctPort: 3100,
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
-  },
-  /* Vite config for component testing */
-  ctViteConfig: {
-    resolve: {
-      alias: [
-        {
-          find: '@crosswithfriends/shared/lib',
-          replacement: path.resolve(__dirname, '../shared/src/lib'),
-        },
-        {
-          find: '@crosswithfriends/shared/fencingGameEvents',
-          replacement: path.resolve(__dirname, '../shared/src/shared/fencingGameEvents'),
-        },
-        {
-          find: '@crosswithfriends/shared/roomEvents',
-          replacement: path.resolve(__dirname, '../shared/src/shared/roomEvents'),
-        },
-        {
-          find: '@crosswithfriends/shared/types',
-          replacement: path.resolve(__dirname, '../shared/src/shared/types'),
-        },
-        {
-          find: '@crosswithfriends/shared',
-          replacement: path.resolve(__dirname, '../shared/src/shared'),
-        },
-        {
-          find: '@shared',
-          replacement: path.resolve(__dirname, '../shared/src/shared'),
-        },
-        {
-          find: '@lib',
-          replacement: path.resolve(__dirname, '../shared/src/lib'),
-        },
-      ],
+    /* Vite config for component testing */
+    ctViteConfig: {
+      resolve: {
+        alias: [
+          {
+            find: '@crosswithfriends/shared/lib',
+            replacement: path.resolve(__dirname, '../shared/src/lib'),
+          },
+          {
+            find: '@crosswithfriends/shared/fencingGameEvents',
+            replacement: path.resolve(__dirname, '../shared/src/shared/fencingGameEvents'),
+          },
+          {
+            find: '@crosswithfriends/shared/roomEvents',
+            replacement: path.resolve(__dirname, '../shared/src/shared/roomEvents'),
+          },
+          {
+            find: '@crosswithfriends/shared/types',
+            replacement: path.resolve(__dirname, '../shared/src/shared/types'),
+          },
+          {
+            find: '@crosswithfriends/shared',
+            replacement: path.resolve(__dirname, '../shared/src/shared'),
+          },
+          {
+            find: '@shared',
+            replacement: path.resolve(__dirname, '../shared/src/shared'),
+          },
+          {
+            find: '@lib',
+            replacement: path.resolve(__dirname, '../shared/src/lib'),
+          },
+        ],
+      },
     },
   },
 

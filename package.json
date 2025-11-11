@@ -20,13 +20,15 @@
     "@types/argparse": "^2.0.17",
     "@types/socket.io": "^3.0.2",
     "argparse": "^2.0.1",
+    "concurrently": "^9.1.2",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.6",
     "prettier": "^3.6.2",
     "turbo": "^2.6.0"
   },
   "scripts": {
-    "devfrontend": "turbo run dev --filter=@crosswithfriends/frontend",
+    "dev": "concurrently -n \"frontend,backend\" -c \"cyan,magenta\" \"yarn devfrontend\" \"yarn devbackend\"",
+    "devfrontend": "turbo run dev:local --filter=@crosswithfriends/frontend",
     "devfrontendprod": "turbo run dev:prod --filter=@crosswithfriends/frontend",
     "devbackend": "turbo run dev --filter=@crosswithfriends/server",
     "devbackendprod": "turbo run dev:prod --filter=@crosswithfriends/server",
