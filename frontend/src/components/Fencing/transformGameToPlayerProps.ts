@@ -3,9 +3,16 @@
  * Applies team-specific clue visibility and grid filtering for fencing games.
  */
 import _ from 'lodash';
-import {CluesJson, GameJson, Cursor, GridData, UserJson, CellIndex} from '@crosswithfriends/shared/types';
-import {CellCoords, Ping} from '../Grid/types';
-import {PlayerActions} from './usePlayerActions';
+import type {
+  CluesJson,
+  GameJson,
+  Cursor,
+  GridData,
+  UserJson,
+  CellIndex,
+} from '@crosswithfriends/shared/types';
+import type {CellCoords, Ping} from '../Grid/types';
+import type {PlayerActions} from './usePlayerActions';
 
 interface PlayerProps {
   beta: boolean;

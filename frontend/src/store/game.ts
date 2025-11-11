@@ -335,7 +335,22 @@ export default class Game extends EventEmitter {
       pid,
     } = rawGame;
 
-    // TODO validation
+    // Validate required fields
+    if (!info || typeof info !== 'object') {
+      throw new Error('Invalid game: info is required');
+    }
+    if (!grid || !Array.isArray(grid) || grid.length === 0) {
+      throw new Error('Invalid game: grid must be a non-empty array');
+    }
+    if (!solution || !Array.isArray(solution) || solution.length === 0) {
+      throw new Error('Invalid game: solution must be a non-empty array');
+    }
+    if (!clues || typeof clues !== 'object') {
+      throw new Error('Invalid game: clues is required');
+    }
+    if (pid === undefined || pid === null) {
+      throw new Error('Invalid game: pid is required');
+    }
 
     const game = {
       info,

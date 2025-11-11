@@ -1,6 +1,6 @@
 import _ from 'lodash';
-import {CellCoords, GameJson} from '../../types';
-import {EventDef} from '../types/EventDef';
+import type {CellCoords, GameJson} from '../../types';
+import type {EventDef} from '../types/EventDef';
 import {TEAM_IDS} from '../constants';
 
 export interface CreateEvent {
@@ -30,19 +30,19 @@ export default create;
 
 const getOrigin = (game: GameJson, teamId: number) => {
   const n = game.grid.length;
-  const m = game.grid[0].length;
+  const m = game.grid[0]?.length ?? 0;
   const origin = teamId === 1 ? {r: n - 1, c: 0} : {r: 0, c: m - 1};
   return origin;
 };
 
 const getSortedWhiteCells = (game: GameJson, origin: CellCoords) => {
   const n = game.grid.length;
-  const m = game.grid[0].length;
+  const m = game.grid[0]?.length ?? 0;
 
   const TIEBREAKER = 1.0001; // this makes the order consistent under 180 rotational symmetry (i.e. don't leave it up to stable sorting to break ties between cells that are equidistant from origin)
 
   const allWhiteCells = _.flatMap(_.range(n).map((r) => _.range(m).map((c) => ({r, c})))).filter(
-    ({r, c}) => !game.grid[r][c].black
+    ({r, c}) => !game.grid[r]?.[c]?.black
   );
 
   const sortedWhiteCells = _.sortBy(
@@ -74,7 +74,9 @@ const getInitialClueVisibility = (
   const down = _.map(game.clues.down, () => false);
   let cnt = 0;
   for (const cell of sortedWhiteCells) {
-    const p = grid[cell.r][cell.c].parents!;
+    const cellData = grid[cell.r]?.[cell.c];
+    if (!cellData?.parents) continue;
+    const p = cellData.parents;
     if (!across[p.across]) {
       cnt += 1;
       across[p.across] = true;

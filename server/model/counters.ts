@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import {pool} from './pool';
+import {logger} from '../utils/logger';
 
 export async function incrementGid(): Promise<string> {
   const startTime = Date.now();
@@ -9,7 +10,7 @@ export async function incrementGid(): Promise<string> {
     `
   );
   const ms = Date.now() - startTime;
-  console.log(`incrementGid took ${ms}ms`);
+  logger.debug(`incrementGid took ${ms}ms`);
   return _.first(rows)!.nextval as string;
 }
 
@@ -21,6 +22,6 @@ export async function incrementPid(): Promise<string> {
     `
   );
   const ms = Date.now() - startTime;
-  console.log(`incrementPid took ${ms}ms`);
+  logger.debug(`incrementPid took ${ms}ms`);
   return _.first(rows)!.nextval as string;
 }

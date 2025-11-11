@@ -1,5 +1,5 @@
-import {FastifyInstance, FastifyRequest, FastifyReply} from 'fastify';
-import {RecordSolveRequest, RecordSolveResponse} from '@shared/types';
+import type {FastifyInstance, FastifyRequest, FastifyReply} from 'fastify';
+import type {RecordSolveRequest, RecordSolveResponse} from '@shared/types';
 import {recordSolve} from '../model/puzzle';
 
 async function recordSolveRouter(fastify: FastifyInstance) {

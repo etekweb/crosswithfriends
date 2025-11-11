@@ -1,6 +1,6 @@
 import _ from 'lodash';
-import {CellCoords, GridData} from '../../types';
-import {EventDef} from '../types/EventDef';
+import type {CellCoords, GridData} from '../../types';
+import type {EventDef} from '../types/EventDef';
 
 export interface RevealEvent {
   scope: CellCoords[];
@@ -9,10 +9,11 @@ export interface RevealEvent {
 
 const reveal: EventDef<RevealEvent> = {
   reducer(state, {scope, id}) {
-    const teamId = state.users[id]?.teamId;
-    if (!teamId) {
+    const user = state.users[id];
+    if (!user || !user.teamId) {
       return state; // illegal update if no user exists with id
     }
+    const teamId = user.teamId;
     if (scope.length !== 1 || !scope[0]) {
       return state; // illegal update if trying to check more than 1 cell
     }
@@ -25,7 +26,7 @@ const reveal: EventDef<RevealEvent> = {
     }
     const [{r, c}] = scope;
     if (
-      teamGrid[r][c].good // if cell is already correct, no need to update
+      teamGrid[r]?.[c]?.good // if cell is already correct, no need to update
     ) {
       return state;
     }
@@ -34,8 +35,8 @@ const reveal: EventDef<RevealEvent> = {
       const newGrid = _.assign([], grid, {
         [r]: _.assign([], grid[r], {
           [c]: {
-            ...grid[r][c],
-            value: state.game!.solution[r][c],
+            ...grid[r]?.[c],
+            value: state.game!.solution[r]?.[c] ?? '',
             bad: false,
             good: true,
             revealed: true,
@@ -53,11 +54,11 @@ const reveal: EventDef<RevealEvent> = {
         teamClueVisibility: {
           ...state.game.teamClueVisibility,
           [teamId]: {
-            across: _.assign(state.game.teamClueVisibility![teamId].across, {
-              [teamGrid[r][c].parents!.across]: true,
+            across: _.assign(state.game.teamClueVisibility?.[teamId]?.across ?? [], {
+              [teamGrid[r]?.[c]?.parents?.across ?? 0]: true,
             }),
-            down: _.assign(state.game.teamClueVisibility![teamId].down, {
-              [teamGrid[r][c].parents!.down]: true,
+            down: _.assign(state.game.teamClueVisibility?.[teamId]?.down ?? [], {
+              [teamGrid[r]?.[c]?.parents?.down ?? 0]: true,
             }),
           },
         },
@@ -69,8 +70,8 @@ const reveal: EventDef<RevealEvent> = {
       users: {
         ...state.users,
         [id]: {
-          ...state.users[id],
-          score: (state.users[id].score || 0) + 1,
+          ...user,
+          score: (user.score || 0) + 1,
         },
       },
       teams: {

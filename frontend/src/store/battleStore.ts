@@ -169,16 +169,17 @@ export const useBattleStore = create<BattleStore>((setState, getState) => {
     },
 
     setSolved: (path: string, team: number) => {
-      // Obviously this has a race. TODO: Figure out atomicity later...
-      get(ref(db, `${path}/winner`)).then((snapshot) => {
-        if (snapshot.val()) {
-          return;
+      // Use transaction to atomically check and set winner
+      runTransaction(ref(db, `${path}/winner`), (current) => {
+        // If winner already exists, don't overwrite
+        if (current) {
+          return current;
         }
-
-        set(ref(db, `${path}/winner`), {
+        // Atomically set winner
+        return {
           team,
           completedAt: Date.now(),
-        });
+        };
       });
     },
 
@@ -214,43 +215,64 @@ export const useBattleStore = create<BattleStore>((setState, getState) => {
       });
     },
 
-    // TODO: This is going to have races, figure out how to use the game reducer later.
     checkPickups: (path: string, r: number, c: number, game: any, team: number) => {
       const {grid, solution} = game;
       const gridObj = new GridObject(grid);
 
-      get(ref(db, `${path}/pickups`)).then((snapshot1) => {
-        const pickups = snapshot1.val();
-
-        get(ref(db, `${path}/powerups`)).then((snapshot2) => {
-          const powerups = snapshot2.val();
-
-          const pickupIfCorrect = (cells: any[]) => {
-            const isCorrect = _.every(
-              cells,
-              ({i, j}: {i: number; j: number}) => grid[i][j].value === solution[i][j]
-            );
-            if (!isCorrect) return;
-
-            _.forEach(pickups, (pickup: any) => {
-              if (pickup.pickedUp) return;
-              const {i, j, type} = pickup;
-              const foundMatch = _.find(cells, {i, j});
-              if (!foundMatch) return;
-
-              pickup.pickedUp = true;
-              powerups[team].push({type});
-            });
-          };
+      // Use transactions to atomically update both pickups and powerups
+      // First, get the current state to determine what needs to be updated
+      Promise.all([get(ref(db, `${path}/pickups`)), get(ref(db, `${path}/powerups`))]).then(
+        ([pickupsSnapshot, powerupsSnapshot]) => {
+          const pickups = pickupsSnapshot.val() || {};
+          const powerups = powerupsSnapshot.val() || {[team]: []};
 
           const {across, down} = gridObj.getCrossingWords(r, c);
-          pickupIfCorrect(across);
-          pickupIfCorrect(down);
+          const cellsToCheck = [...across, ...down];
 
-          set(ref(db, `${path}/pickups`), pickups);
-          set(ref(db, `${path}/powerups`), powerups);
-        });
-      });
+          // Determine which pickups should be collected
+          const pickupsToMark: string[] = [];
+          const powerupsToAdd: any[] = [];
+
+          cellsToCheck.forEach(({i, j}: {i: number; j: number}) => {
+            if (grid[i][j].value !== solution[i][j]) return;
+
+            _.forEach(pickups, (pickup: any, key: string) => {
+              if (pickup.pickedUp) return;
+              if (pickup.i === i && pickup.j === j) {
+                pickupsToMark.push(key);
+                powerupsToAdd.push({type: pickup.type});
+              }
+            });
+          });
+
+          // If no pickups to collect, return early
+          if (pickupsToMark.length === 0) return;
+
+          // Atomically update pickups
+          runTransaction(ref(db, `${path}/pickups`), (currentPickups) => {
+            const updated = {...(currentPickups || {})};
+            pickupsToMark.forEach((key) => {
+              if (updated[key] && !updated[key].pickedUp) {
+                updated[key] = {...updated[key], pickedUp: true};
+              }
+            });
+            return updated;
+          });
+
+          // Atomically update powerups
+          runTransaction(ref(db, `${path}/powerups`), (currentPowerups) => {
+            const updated = {...(currentPowerups || {})};
+            if (!updated[team]) {
+              updated[team] = [];
+            }
+            // Only add powerups that weren't already added
+            powerupsToAdd.forEach((powerup) => {
+              updated[team] = [...updated[team], powerup];
+            });
+            return updated;
+          });
+        }
+      );
     },
 
     countLivePickups: (path: string, cbk: (count: number) => void) => {

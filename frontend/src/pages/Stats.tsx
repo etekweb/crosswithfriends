@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import _ from 'lodash';
 import {fetchStats} from '../api/stats';
-import {ListPuzzleStatsResponse} from '@crosswithfriends/shared/types';
+import type {ListPuzzleStatsResponse} from '@crosswithfriends/shared/types';
 import {getUser} from '../store/user';
 import {Stack, Box} from '@mui/material';
 import {Helmet} from 'react-helmet';

@@ -1,15 +1,27 @@
 import _ from 'lodash';
-// @ts-ignore
 import {makeGrid} from '../gameUtils';
 import {pool} from './pool';
 import {getPuzzle} from './puzzle';
+import type {GameJson} from '@shared/types';
+import {logger} from '../utils/logger';
+import type {CreateEvent} from '@shared/fencingGameEvents/eventDefs/create';
+import type {UpdateCellEvent} from '@shared/fencingGameEvents/eventDefs/updateCell';
+import type {UpdateCursorEvent} from '@shared/fencingGameEvents/eventDefs/updateCursor';
+import type {UpdateDisplayNameEvent} from '@shared/fencingGameEvents/eventDefs/updateDisplayName';
+import type {CheckEvent} from '@shared/fencingGameEvents/eventDefs/check';
+import type {RevealEvent} from '@shared/fencingGameEvents/eventDefs/reveal';
+import type {SendChatMessageEvent} from '@shared/fencingGameEvents/eventDefs/sendChatMessage';
+import type {StartEvent} from '@shared/fencingGameEvents/eventDefs/startGame';
+import type {UpdateTeamNameEvent} from '@shared/fencingGameEvents/eventDefs/updateTeamName';
+import type {UpdateTeamIdEvent} from '@shared/fencingGameEvents/eventDefs/updateTeamId';
+import type {RevealAllCluesEvent} from '@shared/fencingGameEvents/eventDefs/revealAllClues';
 
 export async function getGameEvents(gid: string) {
   const startTime = Date.now();
   const res = await pool.query('SELECT event_payload FROM game_events WHERE gid=$1 ORDER BY ts ASC', [gid]);
   const events = _.map(res.rows, 'event_payload');
   const ms = Date.now() - startTime;
-  console.log(`getGameEvents(${gid}) took ${ms}ms`);
+  logger.debug(`getGameEvents(${gid}) took ${ms}ms`);
   return events;
 }
 
@@ -18,29 +30,131 @@ export async function getGameInfo(gid: string) {
     gid,
   ]);
   if (res.rowCount != 1) {
-    console.log(`Could not find info for game ${gid}`);
+    logger.warn(`Could not find info for game ${gid}`);
     return {};
   }
 
   const info = res.rows[0].event_payload.params.game.info;
-  console.log(`${gid} game info: ${JSON.stringify(info)}`);
+  logger.debug(`${gid} game info: ${JSON.stringify(info)}`);
   return info;
 }
 
-export interface GameEvent {
-  user?: string; // always null actually
+// Legacy event parameter types (from gameStore.ts)
+interface LegacyUpdateCellParams {
+  cell: {r: number; c: number};
+  value: string;
+  color: string;
+  pencil: boolean;
+  id: string;
+  autocheck: boolean;
+}
+
+interface LegacyUpdateCursorParams {
   timestamp: number;
-  type: string; // todo string literal union type
-  params: any; // todo extend GameEvent w/ specific types of game events
+  cell: {r: number; c: number};
+  id: string;
+}
+
+interface LegacyAddPingParams {
+  timestamp: number;
+  cell: {r: number; c: number};
+  id: string;
+}
+
+interface LegacyUpdateColorParams {
+  id: string;
+  color: string;
+}
+
+interface LegacyUpdateClockParams {
+  action: string;
+  timestamp: number;
+}
+
+interface LegacyCheckParams {
+  scope: string | {r: number; c: number}[]; // Can be string or array
+}
+
+interface LegacyRevealParams {
+  scope: string | {r: number; c: number}[]; // Can be string or array
+}
+
+interface LegacyResetParams {
+  scope: string | {r: number; c: number}[]; // Can be string or array
+  force: boolean;
+}
+
+interface LegacyChatParams {
+  text: string;
+  senderId: string;
+  sender: string;
+}
+
+interface LegacySendChatMessageParams {
+  message: string;
+  id: string;
+  sender: string;
+}
+
+interface CreateEventParams {
+  pid: string;
+  version?: number; // Optional for backward compatibility
+  game: GameJson;
+}
+
+// Union type for all game event types
+export type GameEventType =
+  | 'create'
+  | 'updateCell'
+  | 'updateCursor'
+  | 'addPing'
+  | 'updateDisplayName'
+  | 'updateColor'
+  | 'updateClock'
+  | 'check'
+  | 'reveal'
+  | 'reset'
+  | 'chat'
+  | 'sendChatMessage'
+  | 'updateTeamName'
+  | 'updateTeamId'
+  | 'revealAllClues'
+  | 'startGame';
+
+// Union type for all game event parameters
+export type GameEventParams =
+  | CreateEventParams
+  | LegacyUpdateCellParams
+  | LegacyUpdateCursorParams
+  | UpdateCursorEvent
+  | LegacyAddPingParams
+  | UpdateDisplayNameEvent
+  | LegacyUpdateColorParams
+  | LegacyUpdateClockParams
+  | LegacyCheckParams
+  | CheckEvent
+  | LegacyRevealParams
+  | RevealEvent
+  | LegacyResetParams
+  | LegacyChatParams
+  | LegacySendChatMessageParams
+  | SendChatMessageEvent
+  | UpdateTeamNameEvent
+  | UpdateTeamIdEvent
+  | RevealAllCluesEvent
+  | StartEvent
+  | UpdateCellEvent;
+
+export interface GameEvent {
+  user?: string | null; // always null actually
+  timestamp: number;
+  type: GameEventType;
+  params: GameEventParams;
 }
 
 export interface InitialGameEvent extends GameEvent {
   type: 'create';
-  params: {
-    pid: string;
-    version: string;
-    game: any;
-  };
+  params: CreateEventParams;
 }
 
 export async function addGameEvent(gid: string, event: GameEvent) {
@@ -57,14 +171,43 @@ export async function addGameEvent(gid: string, event: GameEvent) {
 
 export async function addInitialGameEvent(gid: string, pid: string): Promise<string> {
   const puzzle = await getPuzzle(pid);
-  console.log('got puzzle', puzzle);
-  const {info = {}, grid: solution = [['']], circles = []} = puzzle;
+  logger.debug('got puzzle', puzzle);
+  const {
+    info = {
+      title: '',
+      author: '',
+      copyright: '',
+      description: '',
+    },
+    grid: solution = [['']],
+    circles = [],
+  } = puzzle;
 
   const gridObject = makeGrid(solution);
   const clues = gridObject.alignClues(puzzle.clues);
   const grid = gridObject.toArray();
 
-  const initialEvent = {
+  // Convert circles from string[] (PuzzleJson format) to CellIndex[] (GameJson format)
+  // PuzzleJson stores circles as strings (likely coordinate strings or index strings),
+  // but GameJson expects CellIndex[] (branded number type)
+  // For now, we'll convert string indices to numbers, or use empty array if conversion fails
+  const circlesAsCellIndices: number[] = (circles || [])
+    .map((circle) => {
+      if (typeof circle === 'string') {
+        // Try to parse as number (if it's an index string)
+        const parsed = parseInt(circle, 10);
+        if (!isNaN(parsed)) {
+          return parsed;
+        }
+        // If parsing fails, it might be a coordinate string like "r,c" - skip for now
+        // In a real implementation, you'd parse coordinates and convert to CellIndex
+        return 0;
+      }
+      return typeof circle === 'number' ? circle : 0;
+    })
+    .filter((idx) => idx >= 0); // Filter out invalid indices
+
+  const initialEvent: InitialGameEvent = {
     user: '',
     timestamp: Date.now(),
     type: 'create',
@@ -72,20 +215,17 @@ export async function addInitialGameEvent(gid: string, pid: string): Promise<str
       pid,
       version: 1.0,
       game: {
-        info,
+        info: {
+          title: info.title || '',
+          author: info.author || '',
+          copyright: info.copyright || '',
+          description: info.description || '',
+          type: info.type,
+        },
         grid,
         solution,
-        circles,
-        chat: {messages: []},
-        cursor: {},
-        clock: {
-          lastUpdated: 0,
-          totalTime: 0,
-          trueTotalTime: 0,
-          paused: true,
-        },
-        solved: false,
         clues,
+        circles: circlesAsCellIndices.length > 0 ? (circlesAsCellIndices as any) : undefined, // CellIndex is a branded type, safe to cast here
       },
     },
   };

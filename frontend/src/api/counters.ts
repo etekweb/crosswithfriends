@@ -1,4 +1,4 @@
-import {IncrementGidResponse, IncrementPidResponse} from '@crosswithfriends/shared/types';
+import type {IncrementGidResponse, IncrementPidResponse} from '@crosswithfriends/shared/types';
 import {SERVER_URL} from './constants';
 
 // ========== POST /api/counters/gid ============

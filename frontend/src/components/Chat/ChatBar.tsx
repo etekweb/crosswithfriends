@@ -10,9 +10,9 @@ interface ChatBarProps {
   onUnfocus: () => void;
 }
 
-export interface ChatBarRef {
+export type ChatBarRef = {
   focus: () => void;
-}
+};
 
 const ChatBar = forwardRef<ChatBarRef, ChatBarProps>(({mobile, onSendMessage, onUnfocus}, ref) => {
   const [message, setMessage] = useState('');

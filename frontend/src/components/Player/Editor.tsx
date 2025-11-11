@@ -49,11 +49,11 @@ interface EditorProps {
   onUnfocus: () => void;
 }
 
-export interface EditorRef {
+export type EditorRef = {
   focus: () => void;
   focusGrid: () => void;
   focusClue: () => void;
-}
+};
 
 const Editor = forwardRef<EditorRef, EditorProps>((props, ref) => {
   const [selected, setSelected] = useState({r: 0, c: 0});

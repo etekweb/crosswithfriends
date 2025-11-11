@@ -1,15 +1,14 @@
 {
   "compilerOptions": {
-    "target": "es2020",
-    "lib": ["es2020"],
+    "target": "es2022",
+    "lib": ["es2022"],
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "jsx": "react",
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": false,
+    "strict": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -17,9 +16,13 @@
     "outDir": "./dist",
     "incremental": true,
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "verbatimModuleSyntax": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
   },
   "include": ["src"],
   "exclude": ["node_modules"]
 }
-

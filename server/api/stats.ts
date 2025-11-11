@@ -1,5 +1,5 @@
-import {FastifyInstance, FastifyRequest, FastifyReply} from 'fastify';
-import {ListPuzzleStatsResponse, ListPuzzleStatsRequest} from '@shared/types';
+import type {FastifyInstance, FastifyRequest, FastifyReply} from 'fastify';
+import type {ListPuzzleStatsResponse, ListPuzzleStatsRequest} from '@shared/types';
 import _ from 'lodash';
 import {getPuzzleSolves} from '../model/puzzle_solve';
 import type {SolvedPuzzleType} from '../model/puzzle_solve';
@@ -61,16 +61,25 @@ async function statsRouter(fastify: FastifyInstance) {
         avgCheckedSquareCount: stat.avg_checked_square_count,
         avgRevealedSquareCount: stat.avg_revealed_square_count,
       }));
-      const history = puzzleSolves.map((solve) => ({
-        puzzleId: solve.pid,
-        gameId: solve.gid,
-        title: solve.title,
-        size: solve.size,
-        dateSolved: solve.solved_time.format('YYYY-MM-DD'),
-        solveTime: solve.time_taken_to_solve,
-        checkedSquareCount: solve.checked_squares_count,
-        revealedSquareCount: solve.revealed_squares_count,
-      }));
+      const history = puzzleSolves.map((solve) => {
+        // Format date as YYYY-MM-DD
+        const date = solve.solved_time;
+        const year = date.getUTCFullYear();
+        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(date.getUTCDate()).padStart(2, '0');
+        const dateSolved = `${year}-${month}-${day}`;
+
+        return {
+          puzzleId: solve.pid,
+          gameId: solve.gid,
+          title: solve.title,
+          size: solve.size,
+          dateSolved,
+          solveTime: solve.time_taken_to_solve,
+          checkedSquareCount: solve.checked_squares_count,
+          revealedSquareCount: solve.revealed_squares_count,
+        };
+      });
 
       const ms = Date.now() - startTime;
       request.log.info({duration: ms, count: puzzleSolves.length}, 'overall /api/stats');

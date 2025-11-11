@@ -6,8 +6,9 @@ import GridWrapper from '@crosswithfriends/shared/lib/wrappers/GridWrapper';
 import RerenderBoundary from '../RerenderBoundary';
 import {hashGridRow} from './hashGridRow';
 import Cell from './Cell';
-import {GridDataWithColor, CellCoords, ClueCoords, BattlePickup, CellStyles, Ping} from './types';
-import {CellIndex, Cursor, GridData, toCellIndex} from '@crosswithfriends/shared/types';
+import type {GridDataWithColor, CellCoords, ClueCoords, BattlePickup, CellStyles, Ping} from './types';
+import {toCellIndex} from '@crosswithfriends/shared/types';
+import type {CellIndex, Cursor, GridData} from '@crosswithfriends/shared/types';
 
 export interface GridProps {
   // Grid data

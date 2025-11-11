@@ -1,6 +1,6 @@
 import _ from 'lodash';
-import {CellCoords} from '../../types';
-import {EventDef} from '../types/EventDef';
+import type {CellCoords} from '../../types';
+import type {EventDef} from '../types/EventDef';
 
 export interface UpdateCellEvent {
   cell: CellCoords;
@@ -32,14 +32,14 @@ const updateCell: EventDef<UpdateCellEvent> = {
     if (!grid) {
       return state; // illegal update if grid is somehow undefined
     }
-    if (grid[r][c].good) {
+    if (grid[r]?.[c]?.good) {
       return state; // if cell is already correct, no need to update
     }
 
     const newGrid = _.assign([], grid, {
       [r]: _.assign([], grid[r], {
         [c]: {
-          ...grid[r][c],
+          ...grid[r]?.[c],
           value,
           bad: false,
         },

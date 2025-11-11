@@ -1,10 +1,5 @@
-import {
-  isSetGameEvent,
-  isUserPingRoomEvent,
-  RoomEvent,
-  RoomEventParams,
-  RoomEventType,
-} from '../../shared/roomEvents';
+import {isSetGameEvent, isUserPingRoomEvent, RoomEventType} from '../../shared/roomEvents';
+import type {RoomEvent, RoomEventParams} from '../../shared/roomEvents';
 
 interface RoomState {
   users: {

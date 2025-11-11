@@ -1,12 +1,12 @@
 import _ from 'lodash';
 import {pool} from './pool';
-import moment from 'moment';
-import {PuzzleJson} from '@shared/types';
+import type {PuzzleJson} from '@shared/types';
+import {logger} from '../utils/logger';
 
 export type SolvedPuzzleType = {
   pid: string;
   gid: string;
-  solved_time: moment.Moment;
+  solved_time: Date;
   time_taken_to_solve: number;
   revealed_squares_count: number;
   checked_squares_count: number;
@@ -18,7 +18,7 @@ type RawFetchedPuzzleSolve = {
   pid: string;
   gid: string;
   content: PuzzleJson;
-  solved_time: moment.Moment;
+  solved_time: Date | string; // Can be Date from DB or string
   time_taken_to_solve: number;
   event_type?: string;
   event_payload?: {
@@ -72,19 +72,24 @@ export async function getPuzzleSolves(gids: string[]): Promise<SolvedPuzzleType[
       const grid = puzzle.content.grid;
       const width = grid.length;
       const length = grid.length > 0 ? grid[0].length : 0;
+      // Parse date string (YYYY-MM-DD) to Date object
+      // If it's already a Date, use it directly
+      const solvedTime =
+        puzzle.solved_time instanceof Date ? puzzle.solved_time : new Date(puzzle.solved_time + 'T00:00:00Z');
+
       return {
         pid,
         gid: puzzle.gid,
         title,
         size: `${width}x${length}`,
-        solved_time: moment(puzzle.solved_time, 'YYYY-MM-DD'),
+        solved_time: solvedTime,
         time_taken_to_solve: Number(puzzle.time_taken_to_solve),
         revealed_squares_count: (revealedSquareByPuzzle.get(puzzle.pid) || new Set()).size,
         checked_squares_count: (checkedSquareByPuzzle.get(puzzle.pid) || new Set()).size,
       };
     })
-    .sort((a, b) => b.solved_time.utc().valueOf() - a.solved_time.utc().valueOf());
+    .sort((a, b) => b.solved_time.getTime() - a.solved_time.getTime());
   const ms = Date.now() - startTime;
-  console.log(`getPuzzleSolves took ${ms}ms for ${gids.length} gids`);
+  logger.debug(`getPuzzleSolves took ${ms}ms for ${gids.length} gids`);
   return puzzleSolves;
 }

@@ -1,16 +1,16 @@
 import {useRef, useState} from 'react';
 import HistoryWrapper from '@crosswithfriends/shared/lib/wrappers/HistoryWrapper';
 import gameReducer from '@crosswithfriends/shared/fencingGameEvents/gameReducer';
-import {GameEvent} from '@crosswithfriends/shared/fencingGameEvents/types/GameEvent';
-import {GameState} from '@crosswithfriends/shared/fencingGameEvents/types/GameState';
+import type {GameEvent} from '@crosswithfriends/shared/fencingGameEvents/types/GameEvent';
+import type {GameState} from '@crosswithfriends/shared/fencingGameEvents/types/GameState';
 
-export interface GameEventsHook {
+export type GameEventsHook = {
   gameState: GameState;
   setEvents(gameEvents: GameEvent[]): void;
   addEvent(gameEvent: GameEvent): void;
   addOptimisticEvent(gameEvent: GameEvent): void;
   getServerTime(): number;
-}
+};
 
 const makeHistoryWrappper = (events: GameEvent[]): HistoryWrapper => {
   const res = new HistoryWrapper(events, gameReducer);

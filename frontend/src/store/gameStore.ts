@@ -89,14 +89,12 @@ export const useGameStore = create<GameStore>((setState, getState) => {
     // Register event handlers BEFORE async operations to avoid missing events
     // Following Socket.io best practice: register handlers outside connect event
     socket.on('disconnect', () => {
-      console.log('received disconnect from server');
+      // Socket disconnected - reconnection is handled automatically by Socket.io
     });
 
     // Handle reconnects - registered once, outside connect event to avoid duplicates
     socket.on('connect', async () => {
-      console.log('reconnecting...');
       await emitAsync(socket, 'join_game', gid);
-      console.log('reconnected...');
       const currentState = getState();
       const currentGame = currentState.games[path];
       if (currentGame?.listeners.reconnect) {
@@ -135,7 +133,6 @@ export const useGameStore = create<GameStore>((setState, getState) => {
         if (currentGame.listeners.wsCreateEvent) {
           currentGame.listeners.wsCreateEvent(processedEvent);
         }
-        console.log('Connected!');
       } else {
         if (currentGame.listeners.wsEvent) {
           currentGame.listeners.wsEvent(processedEvent);
@@ -180,11 +177,37 @@ export const useGameStore = create<GameStore>((setState, getState) => {
   const pushEventToWebsocket = async (path: string, event: any): Promise<any> => {
     const state = getState();
     const game = state.games[path];
-    if (!game || !game.socket || !game.socket.connected) {
-      if (game?.socket) {
-        (game.socket as any).close().open(); // HACK try to fix the disconnection bug
-      }
-      throw new Error('Not connected to websocket');
+    if (!game || !game.socket) {
+      throw new Error('Socket not initialized');
+    }
+
+    // If socket is disconnected, wait for reconnection
+    // Socket.io automatically handles reconnection, we just need to wait
+    if (!game.socket.connected) {
+      // Wait for reconnection with a timeout
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          game.socket?.off('connect', onConnect);
+          reject(new Error('Socket reconnection timeout'));
+        }, 10000); // 10 second timeout
+
+        const onConnect = () => {
+          clearTimeout(timeout);
+          game.socket?.off('connect', onConnect);
+          resolve();
+        };
+
+        if (game.socket.connected) {
+          clearTimeout(timeout);
+          resolve();
+        } else {
+          game.socket.once('connect', onConnect);
+        }
+      });
+
+      // Re-join the game room after reconnection
+      const gid = path.substring(6);
+      await emitAsync(game.socket, 'join_game', gid);
     }
 
     return emitAsync(game.socket, 'game_event', {
@@ -314,8 +337,6 @@ export const useGameStore = create<GameStore>((setState, getState) => {
           },
         },
       });
-
-      console.log('subscribed');
 
       await connectToWebsocket(path);
       await subscribeToWebsocketEvents(path);
@@ -555,7 +576,6 @@ export const useGameStore = create<GameStore>((setState, getState) => {
     },
 
     initialize: async (path: string, rawGame: any, {battleData}: {battleData?: any} = {}) => {
-      console.log('initialize');
       const {
         info = {},
         grid = [[{}]],

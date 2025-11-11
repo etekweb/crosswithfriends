@@ -1,15 +1,15 @@
 /* eslint @typescript-eslint/no-unused-vars : "warn" */
-import {GameEvent} from '@crosswithfriends/shared/fencingGameEvents/types/GameEvent';
-import {GameState} from '@crosswithfriends/shared/fencingGameEvents/types/GameState';
+import type {GameEvent} from '@crosswithfriends/shared/fencingGameEvents/types/GameEvent';
+import type {GameState} from '@crosswithfriends/shared/fencingGameEvents/types/GameState';
 
-export interface ToolbarActions {
+export type ToolbarActions = {
   revealCell(): void;
-}
+};
 
-export interface DispatchFn {
+export type DispatchFn = {
   // TODO move to useEventDispatchFn
   (gameEvent: GameEvent): Promise<void>;
-}
+};
 // translate <Player/> callbacks to game events emitted
 // TODO: copy paste logic from src/components/Game.js
 export const useToolbarActions = (

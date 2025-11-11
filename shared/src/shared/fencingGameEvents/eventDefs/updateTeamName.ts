@@ -1,4 +1,4 @@
-import {EventDef} from '../types/EventDef';
+import type {EventDef} from '../types/EventDef';
 
 export interface UpdateTeamNameEvent {
   teamId: string;

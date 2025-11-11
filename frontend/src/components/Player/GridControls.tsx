@@ -3,7 +3,8 @@ import './css/gridControls.css';
 
 import React, {useEffect, useCallback} from 'react';
 
-import {useGridControls, GridControlsActions} from './useGridControls';
+import {useGridControls} from './useGridControls';
+import type {GridControlsActions} from './useGridControls';
 
 interface GridControlsProps {
   grid: any;

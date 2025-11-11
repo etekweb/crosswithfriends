@@ -4,34 +4,9 @@ import clsx from 'clsx';
 import {Tooltip} from '@mui/material';
 import Emoji from '../common/Emoji';
 import powerups from '@crosswithfriends/shared/lib/powerups';
-import {Ping, CellStyles} from './types';
+import type {Ping, CellStyles, EnhancedCellData} from './types';
 import './css/cell.css';
-import {CellData, Cursor} from '@crosswithfriends/shared/types';
-
-export interface EnhancedCellData extends CellData {
-  r: number;
-  c: number;
-
-  // Player interactions
-  cursors: Cursor[];
-  pings: Ping[];
-  solvedByIconSize: number;
-
-  // Cell states
-  selected: boolean;
-  highlighted: boolean;
-  frozen: boolean;
-  circled: boolean;
-  shaded: boolean;
-  referenced: boolean;
-  canFlipColor: boolean;
-  pickupType: keyof typeof powerups;
-
-  // Styles
-  attributionColor: string;
-  cellStyle: CellStyles;
-  myColor: string;
-}
+import type {CellData, Cursor} from '@crosswithfriends/shared/types';
 
 interface Props extends EnhancedCellData {
   // Callbacks

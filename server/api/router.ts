@@ -1,4 +1,4 @@
-import {FastifyInstance} from 'fastify';
+import type {FastifyInstance} from 'fastify';
 import puzzleListRouter from './puzzle_list';
 import puzzleRouter from './puzzle';
 import gameRouter from './game';

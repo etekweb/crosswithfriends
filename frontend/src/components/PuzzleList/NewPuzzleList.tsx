@@ -1,9 +1,10 @@
 import _ from 'lodash';
 import React, {useEffect, useRef, useState, useMemo, useCallback} from 'react';
-import {PuzzleJson, PuzzleStatsJson, ListPuzzleRequestFilters} from '@crosswithfriends/shared/types';
+import type {PuzzleJson, PuzzleStatsJson, ListPuzzleRequestFilters} from '@crosswithfriends/shared/types';
 import {fetchPuzzleList} from '../../api/puzzle_list';
 import './css/puzzleList.css';
-import Entry, {EntryProps} from './Entry';
+import Entry from './Entry';
+import type {EntryProps} from './Entry';
 
 interface PuzzleStatuses {
   [pid: string]: 'solved' | 'started';
@@ -80,9 +81,11 @@ const NewPuzzleList: React.FC<NewPuzzleListProps> = (props) => {
       setError(null);
       try {
         const nextPage = await fetchPuzzleList({page: currentPage, pageSize, filter: currentFilter});
-        setPuzzles([...currentPuzzles, ...nextPage.puzzles]);
+        // Defensive check: ensure puzzles array exists
+        const puzzlesArray = nextPage?.puzzles || [];
+        setPuzzles([...currentPuzzles, ...puzzlesArray]);
         setPage(currentPage + 1);
-        setFullyLoaded(_.size(nextPage.puzzles) < pageSize);
+        setFullyLoaded(_.size(puzzlesArray) < pageSize);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to load puzzles';
         setError(errorMessage);

@@ -72,14 +72,14 @@ interface PlayerProps {
   optimisticCounter?: number;
 }
 
-export interface PlayerRef {
+export type PlayerRef = {
   focus: () => void;
   selectClue: (direction: string, number: number) => void;
   getSelectedSquares: () => Array<{r: number; c: number}>;
   getSelectedAndHighlightedSquares: () => Array<{r: number; c: number}>;
   getAllSquares: () => Array<{r: number; c: number}>;
   setSelected: (selected: {r: number; c: number}) => void;
-}
+};
 
 const Player = forwardRef<PlayerRef, PlayerProps>((props, ref) => {
   const getInitialSelected = useCallback(() => {

@@ -62,9 +62,9 @@ interface ChatProps {
   info?: {title?: string; description?: string; author?: string; type?: string};
 }
 
-export interface ChatRef {
+export type ChatRef = {
   focus: () => void;
-}
+};
 
 const Chat = forwardRef<ChatRef, ChatProps>((props, ref) => {
   const [username, setUsername] = useState<string>('');

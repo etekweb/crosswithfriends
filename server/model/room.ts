@@ -1,13 +1,14 @@
-import {RoomEvent} from '@shared/roomEvents';
+import type {RoomEvent} from '@shared/roomEvents';
 import _ from 'lodash';
 import {pool} from './pool';
+import {logger} from '../utils/logger';
 
 export async function getRoomEvents(rid: string) {
   const startTime = Date.now();
   const res = await pool.query('SELECT event_payload FROM room_events WHERE rid=$1 ORDER BY ts ASC', [rid]);
   const events = _.map(res.rows, 'event_payload');
   const ms = Date.now() - startTime;
-  console.log(`getRoomEvents(${rid}) took ${ms}ms`);
+  logger.debug(`getRoomEvents(${rid}) took ${ms}ms`);
   return events;
 }
 
@@ -20,5 +21,5 @@ export async function addRoomEvent(rid: string, event: RoomEvent) {
     [rid, event.uid, new Date(event.timestamp).toISOString(), event.type, event]
   );
   const ms = Date.now() - startTime;
-  console.log(`addRoomEvent(${rid}, ${event.type}) took ${ms}ms`);
+  logger.debug(`addRoomEvent(${rid}, ${event.type}) took ${ms}ms`);
 }

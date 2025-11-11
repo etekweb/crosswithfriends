@@ -1,4 +1,5 @@
-import fastify, {FastifyError, FastifyRequest, FastifyReply, FastifyInstance} from 'fastify';
+import fastify from 'fastify';
+import type {FastifyError, FastifyRequest, FastifyReply, FastifyInstance} from 'fastify';
 import cors from '@fastify/cors';
 import {Server as SocketIOServer} from 'socket.io';
 import {Server as HTTPServer} from 'http';

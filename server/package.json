@@ -9,8 +9,8 @@
     "dev:prod": "source ../../.env.prod; PORT=3021 nodemon --watch . -e \"ts\" --exec \"npx ts-node -P tsconfig.json server.ts\"",
     "serve:prod": "while true; do env $(cat ../../.env.prod | xargs) NODE_ENV=production PORT=3021 ts-node -P tsconfig.json server.ts || true; done",
     "serve:staging": "while true; do env $(cat ../../.env.staging | xargs) NODE_ENV=production PORT=4021 ts-node -P tsconfig.json server.ts || true; done",
-    "build": "tsc -p tsconfig.json",
-    "start": "node dist/server.js",
+    "build": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
+    "start": "tsx server.ts",
     "test": "vitest run --config vitest.config.ts",
     "test:watch": "vitest --config vitest.config.ts",
     "test:coverage": "vitest run --coverage --config vitest.config.ts"
@@ -21,9 +21,9 @@
     "fastify": "^5.6.2",
     "joi": "^18.0.1",
     "lodash": "^4.17.21",
-    "moment": "^2.30.1",
     "pg": "^8.16.3",
     "socket.io": "^4.8.1",
+    "tsx": "^4.19.2",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
@@ -39,7 +39,7 @@
     "eslint": "^9.39.1",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
-    "tsx": "^4.19.2",
+    "tsc-alias": "^1.8.10",
     "typescript": "^5.9.3",
     "vitest": "^4.0.8"
   }

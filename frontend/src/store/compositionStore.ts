@@ -370,7 +370,16 @@ export const useCompositionStore = create<CompositionStore>((setState, getState)
         cursor = {},
       } = rawComposition;
 
-      // TODO validation
+      // Validate required fields
+      if (!info || typeof info !== 'object') {
+        throw new Error('Invalid composition: info is required');
+      }
+      if (!grid || !Array.isArray(grid) || grid.length === 0) {
+        throw new Error('Invalid composition: grid must be a non-empty array');
+      }
+      if (!clues || !Array.isArray(clues)) {
+        throw new Error('Invalid composition: clues must be an array');
+      }
 
       const composition = {
         info,

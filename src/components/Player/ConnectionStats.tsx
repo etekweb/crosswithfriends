@@ -9,7 +9,7 @@ const ConnectionStats: React.FC<{}> = () => {
     | undefined
   >();
   const [socketConnected, setSocketConnected] = useState<boolean>(false);
-  
+
   useEffect(() => {
     const it = setInterval(() => {
       setConnectionStatus((window as any).connectionStatus);
@@ -31,12 +31,12 @@ const ConnectionStats: React.FC<{}> = () => {
       </div>
     );
   }
-  
+
   // If socket is connected but we haven't received a pong yet, show "Connecting..."
   if (socketConnected) {
     return <div>Connecting...</div>;
   }
-  
+
   return <div>Not connected</div>;
 };
 

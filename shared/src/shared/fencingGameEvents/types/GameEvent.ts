@@ -1,9 +1,9 @@
 import allEventDefs from '../allEventDefs';
-import {EventType} from './GameEventType';
-import {ExtractParamsType} from './ExtractParamsType';
+import type {EventType} from './GameEventType';
+import type {ExtractParamsType} from './ExtractParamsType';
 
-export interface GameEvent<T extends EventType = EventType> {
+export type GameEvent<T extends EventType = EventType> = {
   type: T;
   params: ExtractParamsType<(typeof allEventDefs)[T]>;
   timestamp?: number;
-}
+};

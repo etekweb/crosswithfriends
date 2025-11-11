@@ -1,8 +1,9 @@
 // ============= Server Values ===========
 
-import {RoomEvent} from '@shared/roomEvents';
-import socketIo from 'socket.io';
-import {addGameEvent, GameEvent, getGameEvents} from './model/game';
+import type {RoomEvent} from '@shared/roomEvents';
+import {Server as SocketIOServer} from 'socket.io';
+import {addGameEvent, getGameEvents} from './model/game';
+import type {GameEvent} from './model/game';
 import {addRoomEvent, getRoomEvents} from './model/room';
 
 interface SocketEvent {
@@ -29,9 +30,9 @@ function assignTimestamp(event: unknown): unknown {
 // ============== Socket Manager ==============
 
 class SocketManager {
-  io: socketIo.Server;
+  io: SocketIOServer;
 
-  constructor(io: socketIo.Server) {
+  constructor(io: SocketIOServer) {
     this.io = io;
   }
 
@@ -50,13 +51,6 @@ class SocketManager {
   listen() {
     this.io.on('connection', (socket) => {
       // ======== Game Events ========= //
-      // NOTICE: join is deprecated in favor of sync_all_game_events
-      // TODO remove once #142 is fully deployed
-      socket.on('join', async (gid, ack) => {
-        socket.join(`game-${gid}`);
-        ack();
-      });
-
       socket.on('join_game', async (gid, ack) => {
         socket.join(`game-${gid}`);
         ack();
@@ -65,13 +59,6 @@ class SocketManager {
       socket.on('leave_game', async (gid, ack) => {
         socket.leave(`game-${gid}`);
         ack();
-      });
-
-      // NOTICE: sync_all is deprecated in favor of sync_all_game_events
-      // TODO remove once #142 is fully deployed
-      socket.on('sync_all', async (gid, ack) => {
-        const events = await getGameEvents(gid);
-        ack(events);
       });
 
       socket.on('sync_all_game_events', async (gid, ack) => {

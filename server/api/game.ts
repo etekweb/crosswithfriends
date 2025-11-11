@@ -1,5 +1,5 @@
-import {FastifyInstance, FastifyRequest, FastifyReply} from 'fastify';
-import {CreateGameRequest, InfoJson, GetGameResponse} from '@shared/types';
+import type {FastifyInstance, FastifyRequest, FastifyReply} from 'fastify';
+import type {CreateGameRequest, InfoJson, GetGameResponse} from '@shared/types';
 
 import {addInitialGameEvent} from '../model/game';
 import {getPuzzleSolves} from '../model/puzzle_solve';

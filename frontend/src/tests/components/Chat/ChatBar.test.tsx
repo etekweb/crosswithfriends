@@ -1,6 +1,7 @@
 import {test, expect} from '@playwright/experimental-ct-react';
 import React, {useRef} from 'react';
-import ChatBar, {ChatBarRef} from '../../../components/Chat/ChatBar';
+import ChatBar from '../../../components/Chat/ChatBar';
+import type {ChatBarRef} from '../../../components/Chat/ChatBar';
 import {TestWrapper} from '../../utils';
 
 test('ChatBar renders', async ({mount}) => {

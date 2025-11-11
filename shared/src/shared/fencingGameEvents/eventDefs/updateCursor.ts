@@ -1,5 +1,5 @@
-import {CellCoords} from '../../types';
-import {EventDef} from '../types/EventDef';
+import type {CellCoords} from '../../types';
+import type {EventDef} from '../types/EventDef';
 
 export interface UpdateCursorEvent {
   id: string;

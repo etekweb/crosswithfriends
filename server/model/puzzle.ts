@@ -1,8 +1,9 @@
 import _ from 'lodash';
 import Joi from 'joi';
 import * as uuid from 'uuid';
-import {PuzzleJson, ListPuzzleRequestFilters} from '@shared/types';
-import {pool} from './pool';
+import type {PuzzleJson, ListPuzzleRequestFilters} from '@shared/types';
+import {pool} from './pool.js';
+import {logger} from '../utils/logger.js';
 
 // ================ Read and Write methods used to interface with postgres ========== //
 
@@ -17,7 +18,7 @@ export async function getPuzzle(pid: string): Promise<PuzzleJson> {
     [pid]
   );
   const ms = Date.now() - startTime;
-  console.log(`getPuzzle (${pid}) took ${ms}ms`);
+  logger.debug(`getPuzzle (${pid}) took ${ms}ms`);
   return _.first(rows)!.content;
 }
 
@@ -96,7 +97,7 @@ export async function listPuzzles(
     })
   );
   const ms = Date.now() - startTime;
-  console.log(`listPuzzles (${JSON.stringify(filter)}, ${limit}, ${offset}) took ${ms}ms`);
+  logger.debug(`listPuzzles (${JSON.stringify(filter)}, ${limit}, ${offset}) took ${ms}ms`);
   return puzzles;
 }
 
@@ -121,7 +122,7 @@ const puzzleValidator = Joi.object({
 });
 
 function validatePuzzle(puzzle: any) {
-  console.log(_.keys(puzzle));
+  logger.debug('Puzzle keys:', _.keys(puzzle));
   const {error} = puzzleValidator.validate(puzzle);
   if (error) {
     throw new Error(error.message);

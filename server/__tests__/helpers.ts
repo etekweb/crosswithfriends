@@ -1,4 +1,5 @@
-import fastify, {FastifyInstance} from 'fastify';
+import fastify from 'fastify';
+import type {FastifyInstance} from 'fastify';
 import cors from '@fastify/cors';
 import apiRouter from '../api/router';
 

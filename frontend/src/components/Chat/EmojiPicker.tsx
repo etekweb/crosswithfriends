@@ -24,9 +24,9 @@ interface EmojiPickerProps {
   onSelectEmoji?: (emoji: string) => void;
 }
 
-export interface EmojiPickerRef {
+export type EmojiPickerRef = {
   handleKeyDown: (e: KeyboardEvent) => void;
-}
+};
 
 const EmojiPicker = forwardRef<EmojiPickerRef, EmojiPickerProps>(
   ({pattern, matches, disableKeyListener, onConfirm, onEscape, onSelectEmoji}, ref) => {

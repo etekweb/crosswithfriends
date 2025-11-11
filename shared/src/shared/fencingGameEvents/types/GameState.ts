@@ -1,6 +1,6 @@
-import {GameJson, UserJson} from '../../types';
+import type {GameJson, UserJson} from '../../types';
 
-export interface GameState {
+export type GameState = {
   loaded: boolean;
   started: boolean;
   startedAt: number | null;
@@ -28,4 +28,4 @@ export interface GameState {
       timestamp: number | undefined;
     }[];
   };
-}
+};

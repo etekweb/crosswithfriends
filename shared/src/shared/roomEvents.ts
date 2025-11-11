@@ -3,21 +3,21 @@ export enum RoomEventType {
   SET_GAME = 'SET_GAME',
 }
 
-export interface RoomEventParams {
+export type RoomEventParams = {
   [RoomEventType.USER_PING]: {
     uid: string;
   };
   [RoomEventType.SET_GAME]: {
     gid: string;
   };
-}
+};
 
-export interface RoomEvent<T extends RoomEventType = RoomEventType> {
+export type RoomEvent<T extends RoomEventType = RoomEventType> = {
   timestamp: number;
   type: T;
   params: RoomEventParams[T];
   uid: string;
-}
+};
 
 export const UserPingRoomEvent = (uid: string): RoomEvent<RoomEventType.USER_PING> => ({
   timestamp: Date.now(),

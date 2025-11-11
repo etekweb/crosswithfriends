@@ -14,7 +14,8 @@ import {MdKeyboardArrowLeft, MdKeyboardArrowRight} from 'react-icons/md';
 import _ from 'lodash';
 import Clue from './ClueText';
 import GridObject from '@crosswithfriends/shared/lib/wrappers/GridWrapper';
-import {useGridControls, UseGridControlsProps, GridControlsActions} from './useGridControls';
+import {useGridControls} from './useGridControls';
+import type {UseGridControlsProps, GridControlsActions} from './useGridControls';
 
 const RunOnce = ({effect}) => {
   useEffect(() => {
@@ -33,9 +34,9 @@ interface MobileGridControlsProps extends UseGridControlsProps {
   actions?: Partial<GridControlsActions>;
 }
 
-export interface MobileGridControlsRef {
+export type MobileGridControlsRef = {
   focusKeyboard?: () => void;
-}
+};
 
 const MobileGridControls = forwardRef<MobileGridControlsRef, MobileGridControlsProps>((props, ref) => {
   const [anchors, setAnchors] = useState<any[]>([]);

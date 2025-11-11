@@ -3,7 +3,6 @@ import {buildTestApp, closeApp, waitForApp} from '../helpers';
 import type {FastifyInstance} from 'fastify';
 import * as puzzleSolveModel from '../../model/puzzle_solve';
 import type {SolvedPuzzleType} from '../../model/puzzle_solve';
-import moment from 'moment';
 
 // Mock the model
 vi.mock('../../model/puzzle_solve');
@@ -36,7 +35,7 @@ describe('Stats API', () => {
           time_taken_to_solve: 120,
           revealed_squares_count: 50,
           checked_squares_count: 100,
-          solved_time: moment('2024-01-01', 'YYYY-MM-DD'),
+          solved_time: new Date('2024-01-01T00:00:00Z'),
         },
         {
           gid: 'gid2',
@@ -46,7 +45,7 @@ describe('Stats API', () => {
           time_taken_to_solve: 180,
           revealed_squares_count: 60,
           checked_squares_count: 120,
-          solved_time: moment('2024-01-02', 'YYYY-MM-DD'),
+          solved_time: new Date('2024-01-02T00:00:00Z'),
         },
       ];
 
@@ -94,7 +93,7 @@ describe('Stats API', () => {
           time_taken_to_solve: 300,
           revealed_squares_count: 100,
           checked_squares_count: 200,
-          solved_time: moment('2024-01-15', 'YYYY-MM-DD'),
+          solved_time: new Date('2024-01-15T00:00:00Z'),
         },
       ];
 
@@ -131,7 +130,7 @@ describe('Stats API', () => {
           time_taken_to_solve: 60,
           revealed_squares_count: 10,
           checked_squares_count: 20,
-          solved_time: moment('2024-01-01', 'YYYY-MM-DD'),
+          solved_time: new Date('2024-01-01T00:00:00Z'),
         },
         {
           gid: 'gid2',
@@ -141,7 +140,7 @@ describe('Stats API', () => {
           time_taken_to_solve: 120,
           revealed_squares_count: 50,
           checked_squares_count: 100,
-          solved_time: moment('2024-01-02', 'YYYY-MM-DD'),
+          solved_time: new Date('2024-01-02T00:00:00Z'),
         },
         {
           gid: 'gid3',
@@ -151,7 +150,7 @@ describe('Stats API', () => {
           time_taken_to_solve: 300,
           revealed_squares_count: 150,
           checked_squares_count: 300,
-          solved_time: moment('2024-01-03', 'YYYY-MM-DD'),
+          solved_time: new Date('2024-01-03T00:00:00Z'),
         },
       ];
 
@@ -199,7 +198,7 @@ describe('Stats API', () => {
           time_taken_to_solve: 100,
           revealed_squares_count: 50,
           checked_squares_count: 100,
-          solved_time: moment('2024-01-01', 'YYYY-MM-DD'),
+          solved_time: new Date('2024-01-01T00:00:00Z'),
         },
         {
           gid: 'gid2',
@@ -209,7 +208,7 @@ describe('Stats API', () => {
           time_taken_to_solve: 200,
           revealed_squares_count: 60,
           checked_squares_count: 120,
-          solved_time: moment('2024-01-02', 'YYYY-MM-DD'),
+          solved_time: new Date('2024-01-02T00:00:00Z'),
         },
         {
           gid: 'gid3',
@@ -219,7 +218,7 @@ describe('Stats API', () => {
           time_taken_to_solve: 300,
           revealed_squares_count: 70,
           checked_squares_count: 140,
-          solved_time: moment('2024-01-03', 'YYYY-MM-DD'),
+          solved_time: new Date('2024-01-03T00:00:00Z'),
         },
       ];
 
@@ -279,7 +278,7 @@ describe('Stats API', () => {
           time_taken_to_solve: 120,
           revealed_squares_count: 50,
           checked_squares_count: 100,
-          solved_time: moment('2024-01-15', 'YYYY-MM-DD'),
+          solved_time: new Date('2024-01-15T00:00:00Z'),
         },
       ];
 

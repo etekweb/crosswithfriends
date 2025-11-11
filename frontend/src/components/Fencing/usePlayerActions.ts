@@ -1,19 +1,19 @@
 /* eslint @typescript-eslint/no-unused-vars : "warn" */
-import {GameEvent} from '@crosswithfriends/shared/fencingGameEvents/types/GameEvent';
-import {CellCoords} from '../Grid/types';
+import type {GameEvent} from '@crosswithfriends/shared/fencingGameEvents/types/GameEvent';
+import type {CellCoords} from '../Grid/types';
 
-export interface PlayerActions {
+export type PlayerActions = {
   updateCursor(nCursor: CellCoords): void;
   updateGrid(r: number, c: number, value: string): void;
   addPing(): void; // TODO
   startGame(): void;
   updateTeamName(name: string): void;
-}
+};
 
-export interface DispatchFn {
+export type DispatchFn = {
   // TODO move to useEventDispatchFn
   (gameEvent: GameEvent): Promise<void>;
-}
+};
 
 // translate <Player/> callbacks to game events emitted
 // TODO: copy paste logic from src/components/Game.js

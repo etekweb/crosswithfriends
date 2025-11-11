@@ -1,5 +1,5 @@
 import {SERVER_URL} from './constants';
-import {
+import type {
   AddPuzzleRequest,
   AddPuzzleResponse,
   RecordSolveRequest,

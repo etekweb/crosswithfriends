@@ -1,5 +1,5 @@
-import {FastifyInstance, FastifyRequest, FastifyReply} from 'fastify';
-import {AddPuzzleResponse, AddPuzzleRequest} from '@shared/types';
+import type {FastifyInstance, FastifyRequest, FastifyReply} from 'fastify';
+import type {AddPuzzleResponse, AddPuzzleRequest} from '@shared/types';
 
 import {addPuzzle} from '../model/puzzle';
 

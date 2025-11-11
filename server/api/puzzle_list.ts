@@ -1,7 +1,7 @@
-import {FastifyInstance, FastifyRequest, FastifyReply} from 'fastify';
-import {ListPuzzleResponse} from '@shared/types';
+import type {FastifyInstance, FastifyRequest, FastifyReply} from 'fastify';
+import type {ListPuzzleResponse} from '@shared/types';
 import {listPuzzles} from '../model/puzzle';
-import {ListPuzzleRequestFilters} from '@shared/types';
+import type {ListPuzzleRequestFilters} from '@shared/types';
 import {createHttpError} from './errors';
 
 interface PuzzleListQuery {

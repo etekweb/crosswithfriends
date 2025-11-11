@@ -5,7 +5,8 @@ import {Helmet} from 'react-helmet';
 import {useParams} from 'react-router-dom';
 
 import {Box} from '@mui/material';
-import {RoomEvent, SetGameRoomEvent, UserPingRoomEvent} from '@crosswithfriends/shared/roomEvents';
+import {SetGameRoomEvent, UserPingRoomEvent} from '@crosswithfriends/shared/roomEvents';
+import type {RoomEvent} from '@crosswithfriends/shared/roomEvents';
 import {useSocket} from '../sockets/useSocket';
 import {initialRoomState, roomReducer} from '@crosswithfriends/shared/lib/reducers/room';
 import {emitAsync} from '../sockets/emitAsync';

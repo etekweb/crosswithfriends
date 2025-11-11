@@ -1,6 +1,6 @@
 import _ from 'lodash';
-import {CellCoords, GridData} from '../../types';
-import {EventDef} from '../types/EventDef';
+import type {CellCoords, GridData} from '../../types';
+import type {EventDef} from '../types/EventDef';
 
 export interface CheckEvent {
   scope: CellCoords[];
@@ -23,10 +23,11 @@ export interface CheckEvent {
  */
 const check: EventDef<CheckEvent> = {
   reducer(state, {scope, id}) {
-    const teamId = state.users[id]?.teamId;
-    if (!teamId) {
+    const user = state.users[id];
+    if (!user || !user.teamId) {
       return state; // illegal update if no user exists with id
     }
+    const teamId = user.teamId;
     if (scope.length !== 1) {
       return state; // illegal update if trying to check more than 1 cell
     }
@@ -37,20 +38,26 @@ const check: EventDef<CheckEvent> = {
     ) {
       return state;
     }
-    const [{r, c}] = scope;
+    const cell = scope[0];
+    if (!cell) {
+      return state; // illegal update if scope is empty
+    }
+    const {r, c} = cell;
+    const cellData = teamGrid[r]?.[c];
     if (
-      teamGrid[r][c].good || // if cell is already correct, no need to update
-      !teamGrid[r][c].value // if cell is not filled out, cannot check
+      !cellData || // if cell doesn't exist, cannot check
+      cellData.good || // if cell is already correct, no need to update
+      !cellData.value // if cell is not filled out, cannot check
     ) {
       return state;
     }
 
     const updateCellCorrect = (grid: GridData): GridData => {
       const newGrid = _.assign([], grid, {
-        [r]: _.assign([], grid[r], {
+        [r]: _.assign([], grid[r] || [], {
           [c]: {
-            ...grid[r][c],
-            value: state.game!.solution[r][c],
+            ...grid[r]?.[c],
+            value: state.game!.solution[r]?.[c],
             bad: false,
             good: true,
             solvedBy: {id, teamId},
@@ -62,9 +69,9 @@ const check: EventDef<CheckEvent> = {
 
     const updateCellIncorrect = (grid: GridData): GridData => {
       const newGrid = _.assign([], grid, {
-        [r]: _.assign([], grid[r], {
+        [r]: _.assign([], grid[r] || [], {
           [c]: {
-            ...grid[r][c],
+            ...grid[r]?.[c],
             bad: true,
             good: false,
           },
@@ -73,7 +80,7 @@ const check: EventDef<CheckEvent> = {
       return newGrid;
     };
 
-    const isCorrect = state.game.solution[r][c] === teamGrid[r][c].value;
+    const isCorrect = state.game.solution[r]?.[c] === cellData.value;
     if (isCorrect) {
       return {
         ...state,
@@ -82,12 +89,24 @@ const check: EventDef<CheckEvent> = {
           teamClueVisibility: {
             ...state.game.teamClueVisibility,
             [teamId]: {
-              across: _.assign(state.game.teamClueVisibility![teamId].across, {
-                [teamGrid[r][c].parents!.across]: true,
-              }),
-              down: _.assign(state.game.teamClueVisibility![teamId].down, {
-                [teamGrid[r][c].parents!.down]: true,
-              }),
+              across: (() => {
+                const existing = state.game.teamClueVisibility?.[teamId]?.across || [];
+                const newArray = [...existing];
+                const clueIndex = cellData.parents?.across ?? 0;
+                if (clueIndex >= 0 && clueIndex < newArray.length) {
+                  newArray[clueIndex] = true;
+                }
+                return newArray;
+              })(),
+              down: (() => {
+                const existing = state.game.teamClueVisibility?.[teamId]?.down || [];
+                const newArray = [...existing];
+                const clueIndex = cellData.parents?.down ?? 0;
+                if (clueIndex >= 0 && clueIndex < newArray.length) {
+                  newArray[clueIndex] = true;
+                }
+                return newArray;
+              })(),
             },
           },
           teamGrids: _.fromPairs(
@@ -98,8 +117,8 @@ const check: EventDef<CheckEvent> = {
         users: {
           ...state.users,
           [id]: {
-            ...state.users[id],
-            score: (state.users[id].score || 0) + 1,
+            ...user,
+            score: (user.score || 0) + 1,
           },
         },
         teams: {
@@ -123,8 +142,8 @@ const check: EventDef<CheckEvent> = {
       users: {
         ...state.users,
         [id]: {
-          ...state.users[id],
-          misses: (state.users[id].misses || 0) + 1,
+          ...user,
+          misses: (user.misses || 0) + 1,
         },
       },
       teams: {

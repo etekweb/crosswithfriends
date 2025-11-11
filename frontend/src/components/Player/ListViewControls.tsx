@@ -1,6 +1,7 @@
 import React, {forwardRef, useCallback, useMemo} from 'react';
 import GridControls from './GridControls';
-import {UseGridControlsProps, GridControlsActions, useGridControls} from './useGridControls';
+import {useGridControls} from './useGridControls';
+import type {UseGridControlsProps, GridControlsActions} from './useGridControls';
 import GridObject from '@crosswithfriends/shared/lib/wrappers/GridWrapper';
 
 interface ListViewControlsProps extends UseGridControlsProps {

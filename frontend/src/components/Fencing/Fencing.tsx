@@ -10,13 +10,14 @@ import Player from '../Player';
 import {transformGameToPlayerProps} from './transformGameToPlayerProps';
 import {usePlayerActions} from './usePlayerActions';
 import {useToolbarActions} from './useToolbarActions';
-import {GameEvent} from '@crosswithfriends/shared/fencingGameEvents/types/GameEvent';
+import type {GameEvent} from '@crosswithfriends/shared/fencingGameEvents/types/GameEvent';
 import {getUser} from '../../store/user';
 import {FencingScoreboard} from './FencingScoreboard';
 import {TEAM_IDS} from '@crosswithfriends/shared/fencingGameEvents/constants';
 import {FencingToolbar} from './FencingToolbar';
 import nameGenerator from '@crosswithfriends/shared/lib/nameGenerator';
-import {useGameEvents, GameEventsHook} from './useGameEvents';
+import {useGameEvents} from './useGameEvents';
+import type {GameEventsHook} from './useGameEvents';
 import {getStartingCursorPosition} from '@crosswithfriends/shared/fencingGameEvents/eventDefs/create';
 import Nav from '../common/Nav';
 import Chat from '../Chat';
@@ -52,7 +53,6 @@ function subscribeToGameEvents(
   }
   function unsubscribe() {
     if (!socket) return;
-    console.log('unsubscribing from game events...');
     emitAsync(socket, 'leave_game', gid);
   }
   const syncPromise = joinAndSync();
@@ -82,7 +82,6 @@ export const Fencing: React.FC<{gid: string}> = (props) => {
       '.sv': 'timestamp',
     };
     (event as any).id = uuid.v4();
-    console.log('sending event', socket, event);
     eventsHook.addOptimisticEvent(event);
     if (socket) {
       emitAsync(socket, 'game_event', {gid, event});
@@ -112,7 +111,6 @@ export const Fencing: React.FC<{gid: string}> = (props) => {
   // separate from useUpdateEffect bc we want it to work when you join an already-completed game
   useEffect(() => {
     if (isGameComplete && !hasRevealedAll && gameState.loaded && gameState.started) {
-      console.log('Game complete, revealing all clues for all teams...');
       sendEvent({
         type: 'revealAllClues',
         params: {},
@@ -122,7 +120,6 @@ export const Fencing: React.FC<{gid: string}> = (props) => {
   }, [isGameComplete, hasRevealedAll, gameState.loaded, gameState.started]);
   useUpdateEffect(() => {
     if (isInitialized) {
-      console.log('initializing for the first time', id, teamId);
       if (!gameState) {
         return; // shouldn't happen
       }
@@ -159,7 +156,6 @@ export const Fencing: React.FC<{gid: string}> = (props) => {
   }, [isInitialized]);
 
   const classes = useStyles();
-  console.log('Game State:', gameState);
 
   const toolbarActions = useToolbarActions(sendEvent, gameState, id);
   const playerActions = usePlayerActions(sendEvent, id);

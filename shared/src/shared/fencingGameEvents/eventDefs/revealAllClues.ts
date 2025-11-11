@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import {EventDef} from '../types/EventDef';
+import type {EventDef} from '../types/EventDef';
 import {TEAM_IDS} from '../constants';
 
 export interface RevealAllCluesEvent {

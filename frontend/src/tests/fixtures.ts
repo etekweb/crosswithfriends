@@ -2,7 +2,8 @@
  * E2E test fixtures
  */
 import {test as base} from '@playwright/test';
-import {createMockSocket, MockSocket} from './mocks/socket';
+import {createMockSocket} from './mocks/socket';
+import type {MockSocket} from './mocks/socket';
 
 type TestFixtures = {
   mockSocket: MockSocket;

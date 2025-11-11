@@ -23,9 +23,9 @@ interface Props {
   key_?: string;
 }
 
-export interface EditableSpanRef {
+export type EditableSpanRef = {
   focus: () => void;
-}
+};
 
 const EditableSpan = forwardRef<EditableSpanRef, Props>((props, ref) => {
   const spanRef = useRef<HTMLDivElement>(null);

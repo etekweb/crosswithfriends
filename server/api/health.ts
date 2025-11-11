@@ -1,4 +1,4 @@
-import {FastifyInstance, FastifyRequest, FastifyReply} from 'fastify';
+import type {FastifyInstance, FastifyRequest, FastifyReply} from 'fastify';
 
 /**
  * Health check endpoint for Docker and monitoring

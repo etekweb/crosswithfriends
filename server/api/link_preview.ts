@@ -1,7 +1,7 @@
-import {FastifyInstance, FastifyRequest, FastifyReply} from 'fastify';
+import type {FastifyInstance, FastifyRequest, FastifyReply} from 'fastify';
 import _ from 'lodash';
 
-import {InfoJson} from '@shared/types';
+import type {InfoJson} from '@shared/types';
 import {getGameInfo} from '../model/game';
 import {isLinkExpanderBot, isFBMessengerCrawler} from '../utils/link_preview_util';
 import {getPuzzleInfo} from '../model/puzzle';
