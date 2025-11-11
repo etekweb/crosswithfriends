@@ -1,8 +1,8 @@
 import _ from 'lodash';
 import Joi from 'joi';
 import * as uuid from 'uuid';
-import {PuzzleJson, ListPuzzleRequestFilters} from '@shared/types';
-import {pool} from './pool';
+import {PuzzleJson, ListPuzzleRequestFilters} from '@shared/types.js';
+import {pool} from './pool.js';
 
 // ================ Read and Write methods used to interface with postgres ========== //
 
@@ -13,6 +13,7 @@ export async function getPuzzle(pid: string): Promise<PuzzleJson> {
       SELECT content
       FROM puzzles
       WHERE pid = $1
+      
     `,
     [pid]
   );
