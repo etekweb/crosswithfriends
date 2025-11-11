@@ -1,6 +1,6 @@
 import React, {useState, useRef, useEffect, useMemo, useCallback} from 'react';
 import _ from 'lodash';
-import Timestamp from 'react-timestamp';
+import Timestamp from '../components/common/Timestamp';
 import {Link, useParams, useLocation} from 'react-router-dom';
 
 import Nav from '../components/common/Nav';

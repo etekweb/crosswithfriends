@@ -2,17 +2,19 @@ import {Box, Stack} from '@mui/material';
 import React from 'react';
 import {Link} from 'react-router-dom';
 import clsx from 'clsx';
-// @ts-ignore
-import swal from '@sweetalert/with-react';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const swal = withReactContent(Swal);
 
 export const WelcomeVariantsControl: React.FC<{
   fencing?: boolean;
 }> = (props) => {
   const showFencingInfo = () => {
-    swal({
+    swal.fire({
       title: 'crosswithfriends.com/fencing',
       icon: 'info',
-      content: (
+      html: (
         <div className="swal-text swal-text--no-margin">
           <p>
             Fencing is a variant of Cross with Friends where you can race to complete a crossword against

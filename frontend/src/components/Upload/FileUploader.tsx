@@ -3,7 +3,10 @@ import './css/fileUploader.css';
 import React, {useCallback} from 'react';
 import Dropzone from 'react-dropzone';
 import {MdFileUpload} from 'react-icons/md';
-import swal from '@sweetalert/with-react';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const swal = withReactContent(Swal);
 
 import {hasShape} from '@crosswithfriends/shared/lib/jsUtils';
 import PUZtoJSON from '@crosswithfriends/shared/lib/converter/PUZtoJSON';
@@ -137,12 +140,11 @@ const FileUploader: React.FC<FileUploaderProps> = ({v2, success, fail}) => {
           if (e?.errorText) defaultText = e.errorText;
           if (e?.errorIcon) defaultIcon = e.errorIcon;
 
-          swal({
+          swal.fire({
             title: defaultTitle,
             text: defaultText,
             icon: defaultIcon,
-            buttons: 'OK',
-            dangerMode: true,
+            confirmButtonText: 'OK',
           });
         }
         if (acceptedFiles[0].preview) {

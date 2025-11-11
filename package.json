@@ -18,11 +18,12 @@
     "@babel/node": "^7.28.0",
     "@babel/preset-env": "^7.28.5",
     "@types/argparse": "^2.0.17",
-    "@types/socket.io": "^3.0.1",
+    "@types/socket.io": "^3.0.2",
     "argparse": "^2.0.1",
+    "husky": "^9.1.7",
     "lint-staged": "^16.2.6",
     "prettier": "^3.6.2",
-    "turbo": "^2.3.3"
+    "turbo": "^2.6.0"
   },
   "scripts": {
     "devfrontend": "turbo run dev --filter=@crosswithfriends/frontend",

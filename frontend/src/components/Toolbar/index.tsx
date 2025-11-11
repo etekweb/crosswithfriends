@@ -5,7 +5,10 @@ import {AiOutlineMenuFold, AiOutlineMenuUnfold} from 'react-icons/ai';
 import {RiPaintFill, RiPaintLine} from 'react-icons/ri';
 import {Box, Stack} from '@mui/material';
 import {Link} from 'react-router-dom';
-import swal from '@sweetalert/with-react';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const swal = withReactContent(Swal);
 import Clock from './Clock';
 import ActionMenu from './ActionMenu';
 import Popup from './Popup';
@@ -154,17 +157,20 @@ const Toolbar: React.FC<Props> = (props) => {
 
   const reveal = useCallback(
     (scopeString: string): void => {
-      swal({
-        title: `Are you sure you want to show the ${scopeString}?`,
-        text: `All players will be able to see the ${scopeString}'s answer.`,
-        icon: 'warning',
-        buttons: true,
-        dangerMode: true,
-      }).then((shouldReveal: boolean) => {
-        if (shouldReveal && props.onReveal) {
-          props.onReveal(scopeString);
-        }
-      });
+      swal
+        .fire({
+          title: `Are you sure you want to show the ${scopeString}?`,
+          text: `All players will be able to see the ${scopeString}'s answer.`,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Yes',
+          cancelButtonText: 'Cancel',
+        })
+        .then((result) => {
+          if (result.isConfirmed && props.onReveal) {
+            props.onReveal(scopeString);
+          }
+        });
     },
     [props.onReveal]
   );
@@ -179,16 +185,19 @@ const Toolbar: React.FC<Props> = (props) => {
   );
 
   const confirmResetPuzzle = useCallback((callback: () => void): void => {
-    swal({
-      title: `Are you sure you want to reset the entire puzzle?`,
-      icon: 'warning',
-      buttons: true,
-      dangerMode: true,
-    }).then((confirmed: boolean) => {
-      if (confirmed) {
-        callback();
-      }
-    });
+    swal
+      .fire({
+        title: `Are you sure you want to reset the entire puzzle?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes',
+        cancelButtonText: 'Cancel',
+      })
+      .then((result) => {
+        if (result.isConfirmed) {
+          callback();
+        }
+      });
   }, []);
 
   const resetPuzzleAndTimer = useCallback((): void => {

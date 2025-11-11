@@ -6,7 +6,7 @@ import React, {useState, useRef, useEffect, useMemo, useCallback} from 'react';
 import {Box, Stack} from '@mui/material';
 import {useParams} from 'react-router-dom';
 
-import Timestamp from 'react-timestamp';
+import Timestamp from '../components/common/Timestamp';
 import HistoryWrapper from '@crosswithfriends/shared/lib/wrappers/HistoryWrapper';
 import Nav from '../components/common/Nav';
 import {PuzzleModel} from '../store';

@@ -1,7 +1,10 @@
 import './css/index.css';
 
 import React, {useState, useCallback} from 'react';
-import swal from '@sweetalert/with-react';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const swal = withReactContent(Swal);
 import actions from '../../actions';
 import FileUploader from './FileUploader';
 import {createNewPuzzle} from '../../api/puzzle';
@@ -22,22 +25,22 @@ const Upload: React.FC<UploadProps> = ({v2, fencing, onCreate}) => {
   }, []);
 
   const renderUploadSuccessModal = useCallback(() => {
-    swal.close();
+    Swal.close();
     if (!recentUnlistedPid) {
       if (onCreate) {
         onCreate();
       }
-      swal({
+      swal.fire({
         title: 'Upload Success!',
         icon: 'success',
         text: 'You may now view your puzzle on the home page.',
       });
     } else {
       const url = `/beta/play/${recentUnlistedPid}${fencing ? '?fencing=1' : ''}`;
-      swal({
+      swal.fire({
         title: 'Upload Success!',
         icon: 'success',
-        content: (
+        html: (
           <div className="swal-text swal-text--no-margin swal-text--text-align-center">
             <p style={{marginTop: 10, marginBottom: 10}}>
               Successfully created an unlisted puzzle. You may now visit the link{' '}
@@ -53,11 +56,11 @@ const Upload: React.FC<UploadProps> = ({v2, fencing, onCreate}) => {
   }, [recentUnlistedPid, fencing, onCreate]);
 
   const renderUploadFailModal = useCallback((err: any) => {
-    swal.close();
-    swal({
+    Swal.close();
+    swal.fire({
       title: 'Upload Failed!',
       icon: 'error',
-      content: (
+      html: (
         <div className="swal-text swal-text--no-margin swal-text--text-align-center">
           <div>Upload failed. Error message:</div>
           <i>{err?.message ? err.message : 'Unknown error'}</i>
@@ -98,31 +101,33 @@ const Upload: React.FC<UploadProps> = ({v2, fencing, onCreate}) => {
   const renderSuccessModal = useCallback(
     (puzzleData: any) => {
       const puzzleTitle = puzzleData.info?.title || 'Untitled';
-      swal({
-        title: 'Confirm Upload',
-        icon: 'info',
-        buttons: [
-          'Cancel',
-          {
-            text: 'Upload',
-            closeModal: false,
-          },
-        ],
-        content: (
-          <div className="swal-text swal-text--no-margin swal-text--text-align-center">
-            <p>
-              You are about to upload the puzzle &quot;
-              {puzzleTitle}
-              &quot;. Continue?
-            </p>
-            <div id="unlistedRow">
-              <label>
-                <input type="checkbox" onChange={handleChangePublicCheckbox} /> Upload Publicly
-              </label>
+      swal
+        .fire({
+          title: 'Confirm Upload',
+          icon: 'info',
+          showCancelButton: true,
+          cancelButtonText: 'Cancel',
+          confirmButtonText: 'Upload',
+          html: (
+            <div className="swal-text swal-text--no-margin swal-text--text-align-center">
+              <p>
+                You are about to upload the puzzle &quot;
+                {puzzleTitle}
+                &quot;. Continue?
+              </p>
+              <div id="unlistedRow">
+                <label>
+                  <input type="checkbox" onChange={handleChangePublicCheckbox} /> Upload Publicly
+                </label>
+              </div>
             </div>
-          </div>
-        ),
-      }).then(handleUpload);
+          ),
+        })
+        .then((result) => {
+          if (result.isConfirmed) {
+            handleUpload();
+          }
+        });
     },
     [handleChangePublicCheckbox, handleUpload]
   );
@@ -138,12 +143,11 @@ const Upload: React.FC<UploadProps> = ({v2, fencing, onCreate}) => {
   );
 
   const fail = useCallback(() => {
-    swal({
+    swal.fire({
       title: `Malformed .puz file`,
       text: `The uploaded .puz file is not a valid puzzle.`,
       icon: 'warning',
-      buttons: 'OK',
-      dangerMode: true,
+      confirmButtonText: 'OK',
     });
   }, []);
 

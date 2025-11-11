@@ -5,7 +5,10 @@ import ReactDOMServer from 'react-dom/server';
 import React, {useContext} from 'react';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import classnames from 'classnames';
-import swal from '@sweetalert/with-react';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const swal = withReactContent(Swal);
 import GlobalContext from '@crosswithfriends/shared/lib/GlobalContext';
 import {getUser} from '../../store/user';
 import User from '../../store/user';
@@ -52,10 +55,10 @@ function LogIn({user, style}: LogInProps): JSX.Element | null {
 }
 
 function showInfo(): void {
-  swal({
+  swal.fire({
     title: 'crosswithfriends.com',
     icon: 'info',
-    content: (
+    html: (
       <div className="swal-text swal-text--no-margin">
         <p>
           Cross with Friends is an online website for sharing crosswords and playing collaboratively with
