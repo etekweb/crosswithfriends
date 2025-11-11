@@ -4,8 +4,8 @@ import cors from '@fastify/cors';
 import {Server as SocketIOServer} from 'socket.io';
 import {Server as HTTPServer} from 'http';
 import _ from 'lodash';
-import SocketManager from './SocketManager';
-import apiRouter from './api/router';
+import SocketManager from './SocketManager.js';
+import apiRouter from './api/router.js';
 
 const port = process.env.PORT || 3000;
 

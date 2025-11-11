@@ -14,6 +14,7 @@ export async function getPuzzle(pid: string): Promise<PuzzleJson> {
       SELECT content
       FROM puzzles
       WHERE pid = $1
+      
     `,
     [pid]
   );
