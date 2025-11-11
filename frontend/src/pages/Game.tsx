@@ -5,13 +5,14 @@ import {Box, Stack} from '@mui/material';
 import Nav from '../components/common/Nav';
 import {useParams, useLocation} from 'react-router-dom';
 
-import {useGameStore, getUser, useBattleStore} from '../store';
+import {GameModel, BattleModel, getUser} from '../store';
 import HistoryWrapper from '@crosswithfriends/shared/lib/wrappers/HistoryWrapper';
 import GameComponent from '../components/Game';
 import MobilePanel from '../components/common/MobilePanel';
 import Chat from '../components/Chat';
 import Powerups from '../components/common/Powerups';
 import {isMobile, rand_color} from '@crosswithfriends/shared/lib/jsUtils';
+import {isValidGid, createSafePath} from '../store/firebaseUtils';
 
 import * as powerupLib from '@crosswithfriends/shared/lib/powerups';
 import {recordSolve} from '../api/puzzle';
@@ -36,9 +37,12 @@ const Game: React.FC = () => {
   const [players, setPlayers] = useState<any>(undefined);
   const [pickups, setPickups] = useState<any>(undefined);
   const [archived, setArchived] = useState<boolean>(false);
+  // Track when gameModel is ready to trigger re-render
+  const [gameModelReady, setGameModelReady] = useState<boolean>(false);
 
-  const gameStore = useGameStore();
-  const battleStore = useBattleStore();
+  const gameModelRef = useRef<InstanceType<typeof GameModel> | null>(null);
+  const opponentGameModelRef = useRef<InstanceType<typeof GameModel> | null>(null);
+  const battleModelRef = useRef<InstanceType<typeof BattleModel> | null>(null);
   const historyWrapperRef = useRef<HistoryWrapper | null>(null);
   const opponentHistoryWrapperRef = useRef<HistoryWrapper | null>(null);
   const userRef = useRef<User | null>(null);
@@ -170,9 +174,8 @@ const Game: React.FC = () => {
         if (userRef.current) {
           userRef.current.markSolved(gid!);
         }
-        if (bid !== undefined && team !== undefined) {
-          const battlePath = `/battle/${bid}`;
-          battleStore.setSolved(battlePath, team);
+        if (battleModelRef.current && team !== undefined) {
+          battleModelRef.current.setSolved(team);
         }
       }
     });
@@ -184,33 +187,30 @@ const Game: React.FC = () => {
 
   const initializeOpponentGame = useCallback(
     (opponentGameId: string): void => {
-      if (!opponentGameId) return;
-
-      const opponentPath = `/game/${opponentGameId}`;
-      // Don't call detach during initialization - it causes state updates that trigger re-renders
-      // Instead, just clean up the old history wrapper if it exists
-      if (opponentHistoryWrapperRef.current) {
-        const oldUnsubscribes = (opponentHistoryWrapperRef.current as any).unsubscribes;
-        if (oldUnsubscribes) {
-          Object.values(oldUnsubscribes).forEach((unsub: any) => {
-            if (typeof unsub === 'function') unsub();
-          });
-        }
+      // Validate opponentGameId following Firebase best practices
+      if (!isValidGid(opponentGameId)) {
+        console.warn('Invalid opponent game id, skipping initialization', opponentGameId);
+        return;
       }
 
+      if (opponentGameModelRef.current) {
+        opponentGameModelRef.current.detach();
+      }
+
+      const opponentPath = createSafePath('/game', opponentGameId);
+      opponentGameModelRef.current = new GameModel(opponentPath);
       const opponentHistoryWrapper = new HistoryWrapper();
       opponentHistoryWrapperRef.current = opponentHistoryWrapper;
 
-      const unsubscribeOpponentCreate = gameStore.subscribe(opponentPath, 'createEvent', (event: any) => {
+      opponentGameModelRef.current.on('createEvent', (event: any) => {
         if (opponentHistoryWrapperRef.current) {
           opponentHistoryWrapperRef.current.setCreateEvent(event);
           handleUpdateRef.current?.();
         }
       });
-      const unsubscribeOpponentEvent = gameStore.subscribe(opponentPath, 'event', (event: any) => {
+      opponentGameModelRef.current.on('event', (event: any) => {
         if (opponentHistoryWrapperRef.current) {
           opponentHistoryWrapperRef.current.addEvent(event);
-          // Opponent events need UI update
           handleUpdateRef.current?.();
         }
       });
@@ -226,19 +226,15 @@ const Game: React.FC = () => {
         if (battlePath && historyWrapperRef.current && opponentHistoryWrapperRef.current) {
           const game = historyWrapperRef.current.getSnapshot();
           const opponentGame = opponentHistoryWrapperRef.current.getSnapshot();
-          battleStore.spawnPowerups(battlePath, 1, [game, opponentGame]);
+          if (battleModelRef.current) {
+            battleModelRef.current.spawnPowerups(1, [game, opponentGame]);
+          }
         }
       }, 6 * 1000);
 
-      gameStore.attach(opponentPath);
-
-      // Store unsubscribe functions for cleanup
-      (opponentHistoryWrapperRef.current as any).unsubscribes = {
-        create: unsubscribeOpponentCreate,
-        event: unsubscribeOpponentEvent,
-      };
+      opponentGameModelRef.current.attach();
     },
-    [handleChange, gameStore, battleStore, bid]
+    [bid]
   );
 
   const initializeBattle = useCallback(
@@ -252,180 +248,150 @@ const Game: React.FC = () => {
       setTeam(battleTeam);
 
       const battlePath = `/battle/${battleId}`;
-      battleStore.detach(battlePath);
+      if (battleModelRef.current) {
+        battleModelRef.current.detach();
+      }
+
+      battleModelRef.current = new BattleModel(battlePath);
 
       let gamesUnsubscribed = false;
-      const unsubscribeGames = battleStore.subscribe(battlePath, 'games', (games: string[]) => {
+      battleModelRef.current.once('games', (games: string[]) => {
         if (!gamesUnsubscribed) {
           gamesUnsubscribed = true;
-          unsubscribeGames();
           const opponentGame = games[1 - battleTeam!];
           setOpponent(opponentGame);
           initializeOpponentGame(opponentGame);
         }
       });
 
-      const unsubscribeUsePowerup = battleStore.subscribe(battlePath, 'usePowerup', (powerup: any) => {
-        const gamePath = gid ? `/game/${gid}` : undefined;
-        const opponentPath = opponent ? `/game/${opponent}` : undefined;
+      battleModelRef.current.on('usePowerup', (powerup: any) => {
         if (gameComponentRef.current?.player) {
           const selected = gameComponentRef.current.player.state?.selected;
-          powerupLib.applyOneTimeEffects(powerup, {
-            gameModel: gamePath ? gameStore.getGame(gamePath) : undefined,
-            opponentGameModel: opponentPath ? gameStore.getGame(opponentPath) : undefined,
-            selected,
-          });
-          handleChange();
+          try {
+            powerupLib.applyOneTimeEffects(powerup, {
+              gameModel: gameModelRef.current || undefined,
+              opponentGameModel: opponentGameModelRef.current || undefined,
+              selected,
+            });
+            handleChange();
+          } catch (error) {
+            console.error('Error applying powerup effects', error);
+          }
         }
       });
 
-      const unsubscribePowerups = battleStore.subscribe(battlePath, 'powerups', (value: any) => {
+      battleModelRef.current.on('powerups', (value: any) => {
         setPowerups(value);
       });
-      const unsubscribeStartedAt = battleStore.subscribe(battlePath, 'startedAt', (value: any) => {
+      battleModelRef.current.on('startedAt', (value: any) => {
         setStartedAt(value);
       });
-      const unsubscribeWinner = battleStore.subscribe(battlePath, 'winner', (value: any) => {
+      battleModelRef.current.on('winner', (value: any) => {
         setWinner(value);
       });
-      const unsubscribePlayers = battleStore.subscribe(battlePath, 'players', (value: any) => {
+      battleModelRef.current.on('players', (value: any) => {
         setPlayers(value);
       });
-      const unsubscribePickups = battleStore.subscribe(battlePath, 'pickups', (value: any) => {
+      battleModelRef.current.on('pickups', (value: any) => {
         setPickups(value);
       });
-      battleStore.attach(battlePath);
 
-      // Store unsubscribe functions for cleanup
-      (battleStore as any).battleUnsubscribes = {
-        games: unsubscribeGames,
-        usePowerup: unsubscribeUsePowerup,
-        powerups: unsubscribePowerups,
-        startedAt: unsubscribeStartedAt,
-        winner: unsubscribeWinner,
-        players: unsubscribePlayers,
-        pickups: unsubscribePickups,
-      };
+      battleModelRef.current.attach();
     },
-    [initializeOpponentGame, handleChange, battleStore, gid, opponent]
+    [initializeOpponentGame, handleChange]
   );
 
   const initializeGame = useCallback((): void => {
-    if (!gid) return;
-
-    const gamePath = `/game/${gid}`;
-    // Don't call detach during initialization - it causes state updates that trigger re-renders
-    // Instead, just clean up the old history wrapper if it exists
-    if (historyWrapperRef.current) {
-      // Clean up old subscriptions if any
-      const oldUnsubscribes = (historyWrapperRef.current as any).unsubscribes;
-      if (oldUnsubscribes) {
-        Object.values(oldUnsubscribes).forEach((unsub: any) => {
-          if (typeof unsub === 'function') unsub();
-        });
-      }
+    // Validate gid following Firebase best practices
+    if (!isValidGid(gid)) {
+      console.warn('Invalid gid, skipping initialization', gid);
+      return;
     }
 
+    // Clean up old game model if it exists
+    if (gameModelRef.current) {
+      gameModelRef.current.detach();
+    }
+
+    const gamePath = createSafePath('/game', gid);
+    gameModelRef.current = new GameModel(gamePath);
     const historyWrapper = new HistoryWrapper();
     historyWrapperRef.current = historyWrapper;
 
-    let battleDataUnsubscribed = false;
-    const unsubscribeBattleData = gameStore.subscribe(gamePath, 'battleData', (battleData: any) => {
-      if (!battleDataUnsubscribed && battleData) {
-        battleDataUnsubscribed = true;
-        unsubscribeBattleData();
-        initializeBattle(battleData);
-      }
+    // Set up event listeners using EventEmitter pattern (like original)
+    // This is synchronous and doesn't cause re-renders
+    gameModelRef.current.once('battleData', (battleData: any) => {
+      initializeBattle(battleData);
     });
 
     console.log('listening ws');
-    const unsubscribeWsCreate = gameStore.subscribe(gamePath, 'wsCreateEvent', (event: any) => {
+    gameModelRef.current.on('wsCreateEvent', (event: any) => {
       console.log('create event', event);
       if (historyWrapperRef.current) {
         historyWrapperRef.current.setCreateEvent(event);
         handleUpdateRef.current?.();
       }
     });
-    const unsubscribeWsEvent = gameStore.subscribe(gamePath, 'wsEvent', (event: any) => {
+    gameModelRef.current.on('wsEvent', (event: any) => {
       if (historyWrapperRef.current) {
         historyWrapperRef.current.addEvent(event);
         handleChange();
-        // Only force update if needed - handleChange already triggers updates
         handleUpdateRef.current?.();
       }
     });
-    const unsubscribeWsOptimistic = gameStore.subscribe(gamePath, 'wsOptimisticEvent', (event: any) => {
+    gameModelRef.current.on('wsOptimisticEvent', (event: any) => {
       if (historyWrapperRef.current) {
         historyWrapperRef.current.addOptimisticEvent(event);
-        // Optimistic events need immediate UI update
         handleUpdateRef.current?.();
       }
     });
-    const unsubscribeReconnect = gameStore.subscribe(gamePath, 'reconnect', () => {
+    gameModelRef.current.on('reconnect', () => {
       if (historyWrapperRef.current) {
         historyWrapperRef.current.clearOptimisticEvents();
-        // Reconnect needs UI update
         handleUpdateRef.current?.();
       }
     });
-
-    const unsubscribeArchived = gameStore.subscribe(gamePath, 'archived', () => {
+    gameModelRef.current.on('archived', () => {
       setArchived(true);
     });
-    gameStore.attach(gamePath);
 
-    // Store unsubscribe functions for cleanup
-    (historyWrapperRef.current as any).unsubscribes = {
-      battleData: unsubscribeBattleData,
-      wsCreate: unsubscribeWsCreate,
-      wsEvent: unsubscribeWsEvent,
-      wsOptimistic: unsubscribeWsOptimistic,
-      reconnect: unsubscribeReconnect,
-      archived: unsubscribeArchived,
-    };
-  }, [gid, initializeBattle, handleChange, gameStore]);
+    // Attach after listeners are set up (this matches original pattern)
+    gameModelRef.current.attach();
 
+    // Mark gameModel as ready to trigger re-render
+    // Use setTimeout to ensure the ref is set before triggering re-render
+    setTimeout(() => {
+      setGameModelReady(true);
+    }, 0);
+  }, [gid, initializeBattle, handleChange]);
+
+  // Main initialization effect - runs when gid changes
   useEffect(() => {
     if (gid) {
       initializeGame();
-      if (userRef.current) {
-        handleUpdateDisplayName(userRef.current.id, initialUsername);
-      }
     }
-  }, [gid, initializeGame, initialUsername]);
 
-  // Cleanup effect - runs when gid, opponent, or bid changes, or on unmount
-  useEffect(() => {
-    // Capture current values for cleanup
-    const currentGid = gid;
-    const currentOpponent = opponent;
-    const currentBid = bid;
-
+    // Cleanup on unmount or gid change
     return () => {
-      // Use setTimeout to defer cleanup and avoid state updates during unmount
-      // This prevents infinite loops from setState during cleanup
-      setTimeout(() => {
-        if (currentGid) {
-          const gamePath = `/game/${currentGid}`;
-          gameStore.detach(gamePath);
-        }
-        if (currentOpponent) {
-          const opponentPath = `/game/${currentOpponent}`;
-          gameStore.detach(opponentPath);
-        }
-        if (currentBid !== undefined) {
-          const battlePath = `/battle/${currentBid}`;
-          battleStore.detach(battlePath);
-        }
-        if (powerupIntervalRef.current) {
-          clearInterval(powerupIntervalRef.current);
-          powerupIntervalRef.current = null;
-        }
-      }, 0);
+      setGameModelReady(false);
+      if (gameModelRef.current) {
+        gameModelRef.current.detach();
+        gameModelRef.current = null;
+      }
+      if (opponentGameModelRef.current) {
+        opponentGameModelRef.current.detach();
+        opponentGameModelRef.current = null;
+      }
+      if (battleModelRef.current) {
+        battleModelRef.current.detach();
+        battleModelRef.current = null;
+      }
+      if (powerupIntervalRef.current) {
+        clearInterval(powerupIntervalRef.current);
+        powerupIntervalRef.current = null;
+      }
     };
-    // Only depend on gid, opponent, bid - not the stores (they're stable references)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gid, opponent, bid]);
+  }, [gid, initializeGame]);
 
   const prevWinnerRef = useRef<any>(undefined);
   useEffect(() => {
@@ -437,9 +403,8 @@ const Game: React.FC = () => {
       const victoryMessage = `Team ${Number(winnerTeam) + 1} [${winningPlayersString}] won! `;
       const timeMessage = `Time taken: ${Number((completedAt - startedAt!) / 1000)} seconds.`;
 
-      if (gid) {
-        const gamePath = `/game/${gid}`;
-        gameStore.chat(gamePath, 'BattleBot', '', victoryMessage + timeMessage);
+      if (gameModelRef.current) {
+        gameModelRef.current.chat('BattleBot', '', victoryMessage + timeMessage);
       }
     }
     prevWinnerRef.current = winner;
@@ -516,35 +481,33 @@ const Game: React.FC = () => {
     setMode((prev) => (prev === 'game' ? 'chat' : 'game'));
   }, []);
 
-  const handleChat = useCallback(
-    (username: string, id: string, message: string): void => {
-      if (gid) {
-        const gamePath = `/game/${gid}`;
-        gameStore.chat(gamePath, username, id, message);
-      }
-    },
-    [gid, gameStore]
-  );
+  const handleChat = useCallback((username: string, id: string, message: string): void => {
+    if (gameModelRef.current) {
+      gameModelRef.current.chat(username, id, message);
+    }
+  }, []);
 
-  const handleUpdateDisplayName = useCallback(
-    (id: string, displayName: string): void => {
-      if (gid) {
-        const gamePath = `/game/${gid}`;
-        gameStore.updateDisplayName(gamePath, id, displayName);
-      }
-    },
-    [gid, gameStore]
-  );
+  const handleUpdateDisplayName = useCallback((id: string, displayName: string): void => {
+    if (gameModelRef.current) {
+      gameModelRef.current.updateDisplayName(id, displayName);
+    }
+  }, []);
+
+  // Update display name when gid or initialUsername changes (runs after handleUpdateDisplayName is defined)
+  useEffect(() => {
+    if (gid && userRef.current) {
+      handleUpdateDisplayName(userRef.current.id, initialUsername);
+    }
+  }, [gid, initialUsername, handleUpdateDisplayName]);
 
   const handleUpdateColor = useCallback(
     (id: string, color: string): void => {
-      if (gid) {
-        const gamePath = `/game/${gid}`;
-        gameStore.updateColor(gamePath, id, color);
+      if (gameModelRef.current) {
+        gameModelRef.current.updateColor(id, color);
         localStorage.setItem(userColorKey, color);
       }
     },
-    [userColorKey, gid, gameStore]
+    [userColorKey]
   );
 
   const updateSeenChatMessage = useCallback(
@@ -576,12 +539,11 @@ const Game: React.FC = () => {
 
   const handleUsePowerup = useCallback(
     (powerup: any): void => {
-      if (bid !== undefined && team !== undefined) {
-        const battlePath = `/battle/${bid}`;
-        battleStore.usePowerup(battlePath, powerup.type, team);
+      if (battleModelRef.current && team !== undefined) {
+        battleModelRef.current.usePowerup(powerup.type, team);
       }
     },
-    [team, bid, battleStore]
+    [team]
   );
 
   const renderGame = useCallback((): JSX.Element | undefined => {
@@ -592,8 +554,8 @@ const Game: React.FC = () => {
     const userId = userRef.current?.id || '';
     const ownPowerups = _.get(powerups, team);
     const opponentPowerups = _.get(powerups, team !== undefined ? 1 - team : undefined);
-    const gamePath = gid ? `/game/${gid}` : undefined;
-    const gameInstance = gamePath ? gameStore.getGame(gamePath) : undefined;
+
+    // Pass gameModel even if it's null - the Game component will handle it
     return (
       <GameComponent
         ref={gameComponentRef}
@@ -602,7 +564,7 @@ const Game: React.FC = () => {
         gid={gid}
         myColor={userColor}
         historyWrapper={historyWrapperRef.current}
-        gameModel={gameInstance as any}
+        gameModel={gameModelRef.current as any}
         onUnfocus={handleUnfocusGame}
         onChange={handleChange}
         onToggleChat={handleToggleChat}
@@ -611,7 +573,7 @@ const Game: React.FC = () => {
         ownPowerups={ownPowerups}
         opponentPowerups={opponentPowerups}
         pickups={pickups}
-        battleModel={bid !== undefined ? (battleStore.getBattle(`/battle/${bid}`) as any) : undefined}
+        battleModel={battleModelRef.current as any}
         team={team}
         unreads={unreads}
       />
@@ -628,9 +590,7 @@ const Game: React.FC = () => {
     handleUnfocusGame,
     handleChange,
     handleToggleChat,
-    gameStore,
-    battleStore,
-    bid,
+    gameModelReady, // Include to trigger re-render when gameModel becomes available
   ]);
 
   const renderChat = useCallback((): JSX.Element | undefined => {
@@ -639,7 +599,8 @@ const Game: React.FC = () => {
     }
 
     const userId = userRef.current?.id || '';
-    const gamePath = gid ? `/game/${gid}` : undefined;
+    // Validate gid before creating path
+    const gamePath = gid && isValidGid(gid) ? createSafePath('/game', gid) : undefined;
     return (
       <Chat
         ref={chatRef}

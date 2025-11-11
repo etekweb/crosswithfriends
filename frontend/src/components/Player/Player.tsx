@@ -203,9 +203,23 @@ const Player = forwardRef<PlayerRef, PlayerProps>((props, ref) => {
   }, [props.grid]);
 
   useEffect(() => {
+    const el = mobileContainerRef.current;
+    if (!el) return;
+
+    // Use ResizeObserver to watch the container element for size changes
+    const resizeObserver = new ResizeObserver(() => {
+      updateSize();
+    });
+    resizeObserver.observe(el);
+
+    // Also listen to window resize as a fallback
     window.addEventListener('resize', updateSize);
+
+    // Initial size calculation
     updateSize();
+
     return () => {
+      resizeObserver.disconnect();
       window.removeEventListener('resize', updateSize);
     };
   }, [updateSize]);

@@ -58,17 +58,18 @@ const Game: React.FC<GameProps> = (props) => {
 
   const handleUpdateColor = useCallback(
     (id: string, color: string) => {
+      if (!props.gameModel) return;
       props.gameModel.updateColor(id, color);
     },
     [props.gameModel]
   );
 
   useEffect(() => {
-    if (prevMyColorRef.current !== props.myColor) {
+    if (prevMyColorRef.current !== props.myColor && props.gameModel) {
       handleUpdateColor(props.id, props.myColor);
       prevMyColorRef.current = props.myColor;
     }
-  }, [props.myColor, props.id, handleUpdateColor]);
+  }, [props.myColor, props.id, props.gameModel, handleUpdateColor]);
 
   const rawGame = useMemo(() => {
     return props.historyWrapper && props.historyWrapper.getSnapshot();
@@ -107,6 +108,10 @@ const Game: React.FC<GameProps> = (props) => {
 
   const handleUpdateGrid = useCallback(
     (r: number, c: number, value: string) => {
+      if (!props.gameModel) {
+        console.warn('handleUpdateGrid called but gameModel is not available');
+        return;
+      }
       const {id, myColor} = props;
       props.gameModel.updateCell(r, c, id, myColor, pencilMode, value, autocheckMode);
       props.onChange({isEdit: true});
@@ -129,6 +134,7 @@ const Game: React.FC<GameProps> = (props) => {
 
   const handleUpdateCursor = useCallback(
     ({r, c}: {r: number; c: number}) => {
+      if (!props.gameModel) return;
       const {id} = props;
       if (game.solved && !_.find(game.cursors, (cursor: any) => cursor.id === id)) {
         return;
@@ -140,6 +146,7 @@ const Game: React.FC<GameProps> = (props) => {
 
   const handleAddPing = useCallback(
     ({r, c}: {r: number; c: number}) => {
+      if (!props.gameModel) return;
       const {id} = props;
       props.gameModel.addPing(r, c, id);
     },
@@ -147,19 +154,23 @@ const Game: React.FC<GameProps> = (props) => {
   );
 
   const handleStartClock = useCallback(() => {
+    if (!props.gameModel) return;
     props.gameModel.updateClock('start');
   }, [props.gameModel]);
 
   const handlePauseClock = useCallback(() => {
+    if (!props.gameModel) return;
     props.gameModel.updateClock('pause');
   }, [props.gameModel]);
 
   const handleResetClock = useCallback(() => {
+    if (!props.gameModel) return;
     props.gameModel.updateClock('reset');
   }, [props.gameModel]);
 
   const handleCheck = useCallback(
     (scopeString: string) => {
+      if (!props.gameModel) return;
       const scope = scope(scopeString);
       props.gameModel.check(scope);
     },
@@ -168,6 +179,7 @@ const Game: React.FC<GameProps> = (props) => {
 
   const handleReveal = useCallback(
     (scopeString: string) => {
+      if (!props.gameModel) return;
       const scopeValue = scope(scopeString);
       props.gameModel.reveal(scopeValue);
       props.onChange();
@@ -177,6 +189,7 @@ const Game: React.FC<GameProps> = (props) => {
 
   const handleReset = useCallback(
     (scopeString: string, force: boolean = false) => {
+      if (!props.gameModel) return;
       const scopeValue = scope(scopeString);
       props.gameModel.reset(scopeValue, force);
     },
@@ -442,9 +455,9 @@ const Game: React.FC<GameProps> = (props) => {
     );
   }, [
     game,
-    mobile,
-    gid,
-    unreads,
+    props.mobile,
+    props.gid,
+    props.unreads,
     listMode,
     expandMenu,
     pencilMode,

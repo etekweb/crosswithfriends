@@ -20,7 +20,6 @@
     "@types/argparse": "^2.0.17",
     "@types/socket.io": "^3.0.1",
     "argparse": "^2.0.1",
-    "husky": "^9.1.7",
     "lint-staged": "^16.2.6",
     "prettier": "^3.6.2",
     "turbo": "^2.3.3"
@@ -40,19 +39,12 @@
     "test": "turbo run test",
     "test:backend": "turbo run test --filter=@crosswithfriends/server",
     "test:backend:watch": "yarn workspace @crosswithfriends/server test:watch",
-    "test:backend:coverage": "yarn workspace @crosswithfriends/server test:coverage",
-    "render:install": "corepack enable && corepack prepare yarn@4.11.0 --activate && yarn install --immutable",
-    "render:build": "turbo run build --filter=@crosswithfriends/frontend"
+    "test:backend:coverage": "yarn workspace @crosswithfriends/server test:coverage"
   },
   "lint-staged": {
     "*.{js,jsx, ts,tsx}": [
       "prettier --write"
     ]
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
   },
   "browserslist": {
     "production": [

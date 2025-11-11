@@ -26,6 +26,7 @@ const ActionMenu: React.FC<Props> = ({label, actions, onBlur}) => {
 
   const handlePointerDown = useCallback((e: PointerEvent): void => {
     if (containerRef.current && containerRef.current.contains(e.target as Node)) {
+      // Don't close menu if clicking inside
       return;
     }
     setActive(false);
@@ -76,12 +77,22 @@ const ActionMenu: React.FC<Props> = ({label, actions, onBlur}) => {
           <div
             key={i}
             className="action-menu--list--action"
+            onPointerDown={(ev) => {
+              ev.stopPropagation();
+            }}
             onMouseDown={(ev) => {
               ev.preventDefault();
+              ev.stopPropagation();
+              handleAction(key);
+            }}
+            onClick={(ev) => {
+              ev.preventDefault();
+              ev.stopPropagation();
               handleAction(key);
             }}
             onTouchStart={(ev) => {
               ev.preventDefault();
+              ev.stopPropagation();
               handleAction(key);
             }}
           >

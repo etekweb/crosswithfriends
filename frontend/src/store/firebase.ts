@@ -58,9 +58,15 @@ const SERVER_TIME = serverTimestamp();
 
 const offsetRef = ref(db, '.info/serverTimeOffset');
 let offset = 0;
-get(offsetRef).then((snapshot) => {
-  offset = snapshot.val() || 0;
-});
+get(offsetRef)
+  .then((snapshot) => {
+    offset = snapshot.val() || 0;
+  })
+  .catch((error) => {
+    // Handle error gracefully - server time offset is not critical
+    console.warn('Failed to get server time offset, using local time', error);
+    offset = 0;
+  });
 
 function getTime(): number {
   return new Date().getTime() + offset;

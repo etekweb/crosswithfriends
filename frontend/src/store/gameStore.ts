@@ -7,6 +7,7 @@ import {emitAsync} from '../sockets/emitAsync';
 import {getSocket} from '../sockets/getSocket';
 import {db, SERVER_TIME, type DatabaseReference} from './firebase';
 import {ref, onValue, off, get, set} from 'firebase/database';
+import {isValidFirebasePath, extractAndValidateGid, createSafePath} from './firebaseUtils';
 
 // ============ Serialize / Deserialize Helpers ========== //
 
@@ -196,68 +197,113 @@ export const useGameStore = create<GameStore>((setState, getState) => {
     games: {},
 
     getGame: (path: string) => {
+      // Validate path following Firebase best practices
+      if (!isValidFirebasePath(path)) {
+        console.error('Invalid game path in getGame', path);
+        throw new Error(`Invalid game path: ${path}`);
+      }
+
+      // Validate gid extraction
+      const gid = extractAndValidateGid(path);
+      if (!gid) {
+        console.error('Invalid gid in game path', path);
+        throw new Error(`Invalid gid in path: ${path}`);
+      }
+
       const state = getState();
       if (!state.games[path]) {
-        const gameRef = ref(db, path);
-        const eventsRef = ref(db, `${path}/events`);
-        (window as any).game = {path}; // For backward compatibility
+        try {
+          const gameRef = ref(db, path);
+          const eventsRef = ref(db, `${path}/events`);
+          (window as any).game = {path}; // For backward compatibility
 
-        setState({
-          games: {
-            ...state.games,
-            [path]: {
-              path,
-              ref: gameRef,
-              eventsRef,
-              createEvent: null,
-              listeners: {},
+          setState({
+            games: {
+              ...state.games,
+              [path]: {
+                path,
+                ref: gameRef,
+                eventsRef,
+                createEvent: null,
+                listeners: {},
+              },
             },
-          },
-        });
+          });
+        } catch (error) {
+          console.error('Error creating game refs', error);
+          throw error;
+        }
       }
       return getState().games[path];
     },
 
     attach: async (path: string) => {
+      // Validate path following Firebase best practices
+      if (!isValidFirebasePath(path)) {
+        console.error('Invalid game path in attach', path);
+        throw new Error(`Invalid game path: ${path}`);
+      }
+
+      // Validate gid extraction
+      const gid = extractAndValidateGid(path);
+      if (!gid) {
+        console.error('Invalid gid in game path', path);
+        throw new Error(`Invalid gid in path: ${path}`);
+      }
+
       const state = getState();
       let game = state.games[path];
       if (!game) {
-        // Create game instance if it doesn't exist
-        const gameRef = ref(db, path);
-        const eventsRef = ref(db, `${path}/events`);
-        game = {
-          path,
-          ref: gameRef,
-          eventsRef,
-          createEvent: null,
-          listeners: {},
-        };
-        setState({
-          games: {
-            ...state.games,
-            [path]: game,
-          },
-        });
+        try {
+          // Create game instance if it doesn't exist
+          const gameRef = ref(db, path);
+          const eventsRef = ref(db, `${path}/events`);
+          game = {
+            path,
+            ref: gameRef,
+            eventsRef,
+            createEvent: null,
+            listeners: {},
+          };
+          setState({
+            games: {
+              ...state.games,
+              [path]: game,
+            },
+          });
+        } catch (error) {
+          console.error('Error creating game instance', error);
+          throw error;
+        }
       }
 
-      // Subscribe to battleData
+      // Subscribe to battleData with error handling (Firebase best practice)
       const battleDataRef = ref(db, `${path}/battleData`);
-      const unsubscribeBattleData = onValue(battleDataRef, (snapshot) => {
-        const currentState = getState();
-        const currentGame = currentState.games[path];
-        if (currentGame?.listeners.battleData) {
-          currentGame.listeners.battleData(snapshot.val());
-        }
-        setState({
-          games: {
-            ...currentState.games,
-            [path]: {
-              ...currentGame!,
-              battleData: snapshot.val(),
+      const unsubscribeBattleData = onValue(
+        battleDataRef,
+        (snapshot) => {
+          const currentState = getState();
+          const currentGame = currentState.games[path];
+          if (!currentGame) return; // Game was detached
+
+          if (currentGame.listeners.battleData) {
+            currentGame.listeners.battleData(snapshot.val());
+          }
+          setState({
+            games: {
+              ...currentState.games,
+              [path]: {
+                ...currentGame,
+                battleData: snapshot.val(),
+              },
             },
-          },
-        });
-      });
+          });
+        },
+        (error) => {
+          // Error callback following Firebase best practices
+          console.error('Error reading battleData', error);
+        }
+      );
 
       setState({
         games: {
@@ -313,19 +359,40 @@ export const useGameStore = create<GameStore>((setState, getState) => {
       const game = state.games[path];
       if (!game) return () => {};
 
+      // Update listeners immediately but use a shallow check to avoid unnecessary state updates
+      // Only update state if the listener actually changed
+      const existingListener = game.listeners[event as keyof typeof game.listeners];
+      if (existingListener === callback) {
+        // Listener already registered, return no-op unsubscribe
+        return () => {};
+      }
+
       const listeners = {
         ...game.listeners,
         [event]: callback as any,
       };
 
-      setState({
-        games: {
-          ...state.games,
-          [path]: {
-            ...game,
-            listeners,
+      // Batch state updates using requestAnimationFrame to prevent infinite loops
+      // This defers the state update to the next frame, breaking synchronous update chains
+      requestAnimationFrame(() => {
+        const currentState = getState();
+        const currentGame = currentState.games[path];
+        if (!currentGame) return;
+
+        // Only update if the listener hasn't changed (another subscription might have updated it)
+        if (currentGame.listeners[event as keyof typeof currentGame.listeners] !== callback) {
+          return;
+        }
+
+        setState({
+          games: {
+            ...currentState.games,
+            [path]: {
+              ...currentGame,
+              listeners,
+            },
           },
-        },
+        });
       });
 
       // Return unsubscribe function
@@ -333,6 +400,11 @@ export const useGameStore = create<GameStore>((setState, getState) => {
         const currentState = getState();
         const currentGame = currentState.games[path];
         if (!currentGame) return;
+
+        // Only update if this listener is still registered
+        if (currentGame.listeners[event as keyof typeof currentGame.listeners] !== callback) {
+          return;
+        }
 
         const newListeners = {...currentGame.listeners};
         delete newListeners[event as keyof typeof newListeners];

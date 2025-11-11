@@ -57,7 +57,17 @@ const Clues: React.FC<CluesProps> = ({
                           ? (el) => scrollToClue(dir as 'across' | 'down', idx, el)
                           : null
                       }
-                      onClick={() => selectClue(dir as 'across' | 'down', idx)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        selectClue(dir as 'across' | 'down', idx);
+                      }}
+                      onPointerDown={(e) => {
+                        // Handle pointer events for touch devices
+                        if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+                          e.preventDefault();
+                          selectClue(dir as 'across' | 'down', idx);
+                        }
+                      }}
                     >
                       <div className="clues--list--scroll--clue--number">{idx}</div>
                       <div className="clues--list--scroll--clue--text">
