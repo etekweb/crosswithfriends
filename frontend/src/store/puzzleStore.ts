@@ -4,11 +4,14 @@ import {db, getTime, type DatabaseReference} from './firebase';
 import {makeGrid} from '@crosswithfriends/shared/lib/gameUtils';
 import _ from 'lodash';
 
+import type {PuzzleData, PuzzleSolveStats, GameListEntry} from '../types/puzzle';
+import type {RawGame} from '../types/rawGame';
+
 interface PuzzleInstance {
   ref: DatabaseReference;
   path: string;
   pid: number;
-  data: any;
+  data: PuzzleData | null;
   ready: boolean;
 }
 
@@ -17,9 +20,10 @@ interface PuzzleStore {
   getPuzzle: (path: string, pid: number) => PuzzleInstance;
   attach: (path: string) => void;
   detach: (path: string) => void;
-  logSolve: (path: string, gid: string, stats: any) => void;
-  toGame: (path: string) => any;
-  listGames: (path: string, limit?: number) => Promise<any>;
+  waitForReady: (path: string, timeoutMs?: number) => Promise<void>;
+  logSolve: (path: string, gid: string, stats: PuzzleSolveStats) => void;
+  toGame: (path: string) => RawGame | null;
+  listGames: (path: string, limit?: number) => Promise<Record<string, GameListEntry> | null>;
 }
 
 export const usePuzzleStore = create<PuzzleStore>((setState, getState) => {
@@ -77,7 +81,58 @@ export const usePuzzleStore = create<PuzzleStore>((setState, getState) => {
       }
     },
 
-    logSolve: (path: string, gid: string, stats: any) => {
+    waitForReady: (path: string, timeoutMs: number = 10000): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        const state = getState();
+        const puzzle = state.puzzles[path];
+        if (puzzle?.ready) {
+          resolve();
+          return;
+        }
+
+        const startTime = Date.now();
+        let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
+        let pollHandle: ReturnType<typeof setTimeout> | null = null;
+
+        const clearTimers = () => {
+          if (timeoutHandle !== null) {
+            clearTimeout(timeoutHandle);
+            timeoutHandle = null;
+          }
+          if (pollHandle !== null) {
+            clearTimeout(pollHandle);
+            pollHandle = null;
+          }
+        };
+
+        // Set up timeout
+        timeoutHandle = setTimeout(() => {
+          clearTimers();
+          reject(new Error(`waitForReady timed out after ${timeoutMs}ms for puzzle at ${path}`));
+        }, timeoutMs);
+
+        // Poll for ready state
+        const checkReady = () => {
+          const currentState = getState();
+          const currentPuzzle = currentState.puzzles[path];
+          if (currentPuzzle?.ready) {
+            clearTimers();
+            resolve();
+          } else {
+            const elapsed = Date.now() - startTime;
+            if (elapsed >= timeoutMs) {
+              clearTimers();
+              reject(new Error(`waitForReady timed out after ${timeoutMs}ms for puzzle at ${path}`));
+            } else {
+              pollHandle = setTimeout(checkReady, 50);
+            }
+          }
+        };
+        checkReady();
+      });
+    },
+
+    logSolve: (path: string, gid: string, stats: PuzzleSolveStats) => {
       const state = getState();
       const puzzle = state.puzzles[path];
       if (!puzzle) return;
@@ -87,9 +142,11 @@ export const usePuzzleStore = create<PuzzleStore>((setState, getState) => {
       const puzzlelistPath = `/puzzlelist/${puzzle.pid}`;
       set(ref(db, `${statsPath}/solves/${gid}`), stats);
       get(statsRef).then((snapshot) => {
-        const stats = snapshot.val();
-        const numSolves = _.keys(stats.solves).length;
-        set(ref(db, `${puzzlelistPath}/stats/numSolves`), numSolves);
+        const statsData = snapshot.val() as {solves?: Record<string, unknown>} | null;
+        if (statsData?.solves) {
+          const numSolves = _.keys(statsData.solves).length;
+          set(ref(db, `${puzzlelistPath}/stats/numSolves`), numSolves);
+        }
       });
     },
 
@@ -99,11 +156,14 @@ export const usePuzzleStore = create<PuzzleStore>((setState, getState) => {
       if (!puzzle || !puzzle.data) return null;
 
       const {info, circles = [], shades = [], grid: solution, pid} = puzzle.data;
+      if (!solution) {
+        return null;
+      }
       const gridObject = makeGrid(solution);
-      const clues = gridObject.alignClues(puzzle.data.clues);
+      const clues = gridObject.alignClues(puzzle.data.clues || {across: [], down: []});
       const grid = gridObject.toArray();
 
-      return {
+      const rawGame: RawGame = {
         info,
         circles,
         shades,
@@ -111,13 +171,12 @@ export const usePuzzleStore = create<PuzzleStore>((setState, getState) => {
         solution,
         pid,
         grid,
-        createTime: getTime(),
-        startTime: null,
         chat: {
           users: [],
           messages: [],
         },
       };
+      return rawGame;
     },
 
     listGames: async (path: string, limit: number = 100) => {
@@ -128,7 +187,7 @@ export const usePuzzleStore = create<PuzzleStore>((setState, getState) => {
       const gameRef = ref(db, '/game');
       const gamesQuery = query(gameRef, orderByChild('pid'), equalTo(puzzle.pid), limitToLast(limit));
       const snapshot = await get(gamesQuery);
-      return snapshot.val();
+      return snapshot.val() as Record<string, GameListEntry> | null;
     },
   };
 });
