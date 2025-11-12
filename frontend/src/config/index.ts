@@ -39,7 +39,8 @@ const getEnvVar = (key: string, defaultValue?: string): string => {
   if (value === undefined && defaultValue === undefined) {
     throw new Error(`Required environment variable ${key} is not set`);
   }
-  return value || defaultValue || '';
+  // Use nullish coalescing to preserve empty strings and only fallback for undefined
+  return value ?? defaultValue ?? '';
 };
 
 const isDevelopment = import.meta.env.MODE === 'development';
@@ -56,8 +57,13 @@ const REMOTE_SERVER_URL = REMOTE_SERVER.includes('localhost')
   ? `${window.location.protocol}//${REMOTE_SERVER}`
   : `https://${REMOTE_SERVER}`;
 
-if (window.location.protocol === 'https' && isDevelopment) {
-  throw new Error('Please use http in development');
+// Warn about HTTPS in development (can cause issues with local servers)
+// Only warn if explicitly disallowed via environment flag
+if (window.location.protocol === 'https' && isDevelopment && import.meta.env.VITE_DISALLOW_HTTPS_IN_DEV === '1') {
+  console.warn(
+    '⚠️ HTTPS detected in development mode. This may cause issues with local servers and WebSocket connections. ' +
+    'Consider using HTTP for local development. To disable this warning, remove VITE_DISALLOW_HTTPS_IN_DEV from your environment.'
+  );
 }
 
 const useLocalServer = getEnvVar('VITE_USE_LOCAL_SERVER', '0') === '1';

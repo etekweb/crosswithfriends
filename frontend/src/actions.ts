@@ -67,21 +67,26 @@ const actions = {
     const puzzle = puzzleStore.getPuzzle(puzzlePath, pid);
     puzzleStore.attach(puzzlePath);
     
-    // Wait for puzzle to be ready
-    await puzzleStore.waitForReady(puzzlePath);
-    
-    // Convert puzzle to game format
-    const rawGame = puzzleStore.toGame(puzzlePath);
-    
-    if (!rawGame) {
-      throw new Error('Failed to convert puzzle to game');
-    }
-    
-    // Initialize game using Zustand store
-    await gameStore.initialize(gamePath, rawGame, {battleData});
-    
-    if (cbk) {
-      cbk(finalGid);
+    try {
+      // Wait for puzzle to be ready
+      await puzzleStore.waitForReady(puzzlePath);
+      
+      // Convert puzzle to game format
+      const rawGame = puzzleStore.toGame(puzzlePath);
+      
+      if (!rawGame) {
+        throw new Error('Failed to convert puzzle to game');
+      }
+      
+      // Initialize game using Zustand store
+      await gameStore.initialize(gamePath, rawGame, {battleData});
+      
+      if (cbk) {
+        cbk(finalGid);
+      }
+    } finally {
+      // Detach puzzle after use to prevent listener leaks
+      puzzleStore.detach(puzzlePath);
     }
   },
 

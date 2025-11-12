@@ -20,7 +20,7 @@ interface PuzzleStore {
   getPuzzle: (path: string, pid: number) => PuzzleInstance;
   attach: (path: string) => void;
   detach: (path: string) => void;
-  waitForReady: (path: string) => Promise<void>;
+  waitForReady: (path: string, timeoutMs?: number) => Promise<void>;
   logSolve: (path: string, gid: string, stats: PuzzleSolveStats) => void;
   toGame: (path: string) => RawGame | null;
   listGames: (path: string, limit?: number) => Promise<Record<string, GameListEntry> | null>;
@@ -81,8 +81,8 @@ export const usePuzzleStore = create<PuzzleStore>((setState, getState) => {
       }
     },
 
-    waitForReady: (path: string): Promise<void> => {
-      return new Promise((resolve) => {
+    waitForReady: (path: string, timeoutMs: number = 10000): Promise<void> => {
+      return new Promise((resolve, reject) => {
         const state = getState();
         const puzzle = state.puzzles[path];
         if (puzzle?.ready) {
@@ -90,14 +90,42 @@ export const usePuzzleStore = create<PuzzleStore>((setState, getState) => {
           return;
         }
 
+        const startTime = Date.now();
+        let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
+        let pollHandle: ReturnType<typeof setTimeout> | null = null;
+
+        const clearTimers = () => {
+          if (timeoutHandle !== null) {
+            clearTimeout(timeoutHandle);
+            timeoutHandle = null;
+          }
+          if (pollHandle !== null) {
+            clearTimeout(pollHandle);
+            pollHandle = null;
+          }
+        };
+
+        // Set up timeout
+        timeoutHandle = setTimeout(() => {
+          clearTimers();
+          reject(new Error(`waitForReady timed out after ${timeoutMs}ms for puzzle at ${path}`));
+        }, timeoutMs);
+
         // Poll for ready state
         const checkReady = () => {
           const currentState = getState();
           const currentPuzzle = currentState.puzzles[path];
           if (currentPuzzle?.ready) {
+            clearTimers();
             resolve();
           } else {
-            setTimeout(checkReady, 50);
+            const elapsed = Date.now() - startTime;
+            if (elapsed >= timeoutMs) {
+              clearTimers();
+              reject(new Error(`waitForReady timed out after ${timeoutMs}ms for puzzle at ${path}`));
+            } else {
+              pollHandle = setTimeout(checkReady, 50);
+            }
           }
         };
         checkReady();
